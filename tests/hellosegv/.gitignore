@@ -1,0 +1,5 @@
+hellosegv
+*.seer
+core.*
+rr/*
+crash_dumps/*

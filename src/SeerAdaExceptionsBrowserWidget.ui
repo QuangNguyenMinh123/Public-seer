@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SeerAdaExceptionsBrowserWidgetForm</class>
+ <widget class="QWidget" name="SeerAdaExceptionsBrowserWidgetForm">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>730</width>
+    <height>698</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Ada Exceptions Browser</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QHistoryLineEdit" name="adaExceptionsSearchLineEdit">
+       <property name="toolTip">
+        <string>Search in the list of exceptions. &quot;*&quot; is allowed.</string>
+       </property>
+       <property name="statusTip">
+        <string/>
+       </property>
+       <property name="placeholderText">
+        <string>Search regex...</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="addCatchpointToolButton">
+       <property name="toolTip">
+        <string>Add a catchpoint for an Ada exception.</string>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset resource="resource.qrc">
+         <normaloff>:/seer/resources/RelaxLightIcons/document-new.svg</normaloff>:/seer/resources/RelaxLightIcons/document-new.svg</iconset>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="1" column="0">
+    <widget class="QTreeWidget" name="adaExceptionsTreeWidget">
+     <property name="columnCount">
+      <number>2</number>
+     </property>
+     <column>
+      <property name="text">
+       <string>Name</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Address</string>
+      </property>
+     </column>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QHistoryLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header location="global">QHistoryLineEdit.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="resource.qrc"/>
+ </resources>
+ <connections/>
+</ui>

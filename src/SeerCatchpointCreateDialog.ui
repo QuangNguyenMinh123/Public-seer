@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SeerCatchpointCreateDialogForm</class>
+ <widget class="QDialog" name="SeerCatchpointCreateDialogForm">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>543</width>
+    <height>403</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Create a Catchpoint</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QGroupBox" name="catchpointTypeGroupBox">
+     <property name="title">
+      <string>Catchpoint Type</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="0" column="0">
+       <widget class="QRadioButton" name="throwRadioButton">
+        <property name="text">
+         <string>Catch on 'throw'</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">typeButtonGroup</string>
+        </attribute>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QRadioButton" name="loadRadioButton">
+        <property name="text">
+         <string>Catch on library 'load'</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">typeButtonGroup</string>
+        </attribute>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QRadioButton" name="adaAssertRadioButton">
+        <property name="text">
+         <string>Catch on Ada 'assert'</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">typeButtonGroup</string>
+        </attribute>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QRadioButton" name="rethrowRadioButton">
+        <property name="text">
+         <string>Catch on 'rethrow'</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">typeButtonGroup</string>
+        </attribute>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QRadioButton" name="unloadRadioButton">
+        <property name="text">
+         <string>Catch on library 'unload'</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">typeButtonGroup</string>
+        </attribute>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QRadioButton" name="adaExceptionRadioButton">
+        <property name="text">
+         <string>Catch on Ada 'exception'</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">typeButtonGroup</string>
+        </attribute>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QRadioButton" name="catchRadioButton">
+        <property name="text">
+         <string>Catch on 'catch'</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">typeButtonGroup</string>
+        </attribute>
+       </widget>
+      </item>
+      <item row="2" column="2">
+       <widget class="QRadioButton" name="adaHandlersRadioButton">
+        <property name="text">
+         <string>Catch on Ada 'handlers'</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">typeButtonGroup</string>
+        </attribute>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QRadioButton" name="signalRadioButton">
+        <property name="text">
+         <string>Catch on 'signal'</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">typeButtonGroup</string>
+        </attribute>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QRadioButton" name="forkRadioButton">
+        <property name="text">
+         <string>Catch on 'fork'</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">typeButtonGroup</string>
+        </attribute>
+       </widget>
+      </item>
+      <item row="3" column="2">
+       <widget class="QRadioButton" name="execRadioButton">
+        <property name="text">
+         <string>Catch on 'exec'</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">typeButtonGroup</string>
+        </attribute>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QRadioButton" name="syscallRadioButton">
+        <property name="text">
+         <string>Catch on 'syscall'</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">typeButtonGroup</string>
+        </attribute>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QRadioButton" name="vforkRadioButton">
+        <property name="text">
+         <string>Catch on 'vfork'</string>
+        </property>
+        <attribute name="buttonGroup">
+         <string notr="true">typeButtonGroup</string>
+        </attribute>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="catchpointDetailsGroupBox">
+     <property name="title">
+      <string>Catchpoint Details</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="0" column="0" colspan="2">
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <widget class="QCheckBox" name="temporaryCheckBox">
+          <property name="toolTip">
+           <string>Create a temporary catchpoint.</string>
+          </property>
+          <property name="text">
+           <string>Temporary</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="disabledCheckBox">
+          <property name="toolTip">
+           <string>Create a disabled catchpoint.</string>
+          </property>
+          <property name="text">
+           <string>Disabled</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="argumentsLabel">
+        <property name="text">
+         <string>Arguments</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="argumentsLineEdit">
+        <property name="placeholderText">
+         <string>Optional arguments for selected Catchpoint type.</string>
+        </property>
+        <property name="clearButtonEnabled">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <tabstops>
+  <tabstop>throwRadioButton</tabstop>
+  <tabstop>loadRadioButton</tabstop>
+  <tabstop>adaAssertRadioButton</tabstop>
+  <tabstop>rethrowRadioButton</tabstop>
+  <tabstop>unloadRadioButton</tabstop>
+  <tabstop>adaExceptionRadioButton</tabstop>
+  <tabstop>catchRadioButton</tabstop>
+  <tabstop>adaHandlersRadioButton</tabstop>
+  <tabstop>signalRadioButton</tabstop>
+  <tabstop>forkRadioButton</tabstop>
+  <tabstop>execRadioButton</tabstop>
+  <tabstop>syscallRadioButton</tabstop>
+  <tabstop>vforkRadioButton</tabstop>
+  <tabstop>temporaryCheckBox</tabstop>
+  <tabstop>disabledCheckBox</tabstop>
+  <tabstop>argumentsLineEdit</tabstop>
+ </tabstops>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>SeerCatchpointCreateDialogForm</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>257</x>
+     <y>393</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>SeerCatchpointCreateDialogForm</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>325</x>
+     <y>393</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <buttongroups>
+  <buttongroup name="typeButtonGroup"/>
+ </buttongroups>
+</ui>
