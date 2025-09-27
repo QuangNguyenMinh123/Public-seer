@@ -10,6 +10,7 @@
 #include "SeerUtl.h"
 #include "SeerOpenOCDWidget.h"
 #include "QHContainerWidget.h"
+#include "SeerOpenOCDDebugOnInit.h"
 #include <QtGui/QFont>
 #include <QtGui/QGuiApplication>
 #include <QtWidgets/QApplication>
@@ -34,6 +35,8 @@
 #include <signal.h>
 #include <string.h>
 #include <errno.h>
+#include <QMutex>
+#include <QWaitCondition>
 
 #include "ui_SeerGdbWidget.h"
 static QLoggingCategory LC("seer.gdbwidget");
@@ -79,6 +82,12 @@ SeerGdbWidget::SeerGdbWidget (QWidget* parent) : QWidget(parent) {
     // for openOCD gdb-multiarch support
     _gdbMultiarchProgram                = "/usr/bin/gdb-multiarch";
     _gdbMultiarchArguments              = "--interpreter=mi";
+    _isBuildInDocker                    = false;
+    _absoluteBuildPath                  = "";
+    _dockerBuildPath                    = "";
+    _newHBreakFlag                      = false;
+    _isTargetRunning                    = false;
+    _debugOnInitFlag                    = false;
 
     setIsQuitting(false);
     setNewExecutableFlag(true);
@@ -202,6 +211,7 @@ SeerGdbWidget::SeerGdbWidget (QWidget* parent) : QWidget(parent) {
     QObject::connect(_gdbMonitor,                                               &GdbMonitor::astrixTextOutput,                                                              _watchpointsBrowserWidget,                                      &SeerWatchpointsBrowserWidget::handleText);
     QObject::connect(_gdbMonitor,                                               &GdbMonitor::astrixTextOutput,                                                              this,                                                           &SeerGdbWidget::handleText);
     QObject::connect(_gdbMonitor,                                               &GdbMonitor::equalTextOutput,                                                               this,                                                           &SeerGdbWidget::handleText);
+    QObject::connect(_gdbMonitor,                                               &GdbMonitor::caretTextOutput,                                                               this,                                                           &SeerGdbWidget::handleText);
 
     QObject::connect(_gdbMonitor,                                               &GdbMonitor::caretTextOutput,                                                               threadManagerWidget->threadFramesBrowserWidget(),               &SeerThreadFramesBrowserWidget::handleText);
     QObject::connect(_gdbMonitor,                                               &GdbMonitor::equalTextOutput,                                                               threadManagerWidget->threadFramesBrowserWidget(),               &SeerThreadFramesBrowserWidget::handleText);
@@ -428,9 +438,15 @@ SeerGdbWidget::SeerGdbWidget (QWidget* parent) : QWidget(parent) {
 
     // openocd: if OpenOCD failed to start because the port is already in use, run handleOpenOCDStartFailed
     // QObject::connect(SeerOpenOCDWidgetNp::getOpenOCDWidget(),                   &SeerOpenOCDWidget::SeerOpenOCDWidget::openocdStartFailed,                                  this,                                                           &SeerGdbWidget::handleOpenOCDStartFailed);
+#if ENABLE_GDB_LOGOUT == 1
     // For debuging
-    QObject::connect(this,                                                      &SeerGdbWidget::allTextOutput,                                                               _gdbOutputLog,                                                  &SeerGdbLogWidget::handleText);
-    QObject::connect(_gdbMonitor,                                               &GdbMonitor::allTextOutput,                                                               _gdbOutputLog,                                                  &SeerGdbLogWidget::handleText);
+    QObject::connect(this,                                                      &SeerGdbWidget::allTextOutput,                                                              _gdbOutputLog,                                                  &SeerGdbLogWidget::handleText);
+    QObject::connect(_gdbMonitor,                                               &GdbMonitor::allTextOutput,                                                                 _gdbOutputLog,                                                  &SeerGdbLogWidget::handleText);
+#endif
+    // For debug on init
+    QObject::connect(this,                                                      &SeerGdbWidget::requestChangeConnection,                                                    this,                                                           &SeerGdbWidget::handleSyncSetConnection);
+    QObject::connect(this,                                                      &SeerGdbWidget::requestRefreshSource,                                                       this,                                                           &SeerGdbWidget::handleGdbExecutableSources);
+
     // Restore window settings.
     readSettings();
 }
@@ -943,12 +959,25 @@ void SeerGdbWidget::readLogsSettings () {
 void SeerGdbWidget::handleText (const QString& text) {
 
     if (text.startsWith("*running")) {
-        if (_gdbmultiarchPid > 0)               // if openoocd target running, target is running
+        // If debugging on init is true, raise _debugOnInitOperationCv.notify to tell threadHandler that target is stopped
+        if (isDebugOnInit())
+        {
+            _debugOnInitRunningMutex.lock();
+            _debugOnInitRunningCv.notify_one();
+            _debugOnInitRunningMutex.unlock();
+        }
+        if (_gdbmultiarchPid > 0)               // if openoocd target running, set target is running
             setGdbMultiarchRunningState(true);
     }
     if (text.startsWith("*running,thread-id=\"all\"")) {
     // Probably a better way to handle all these types of stops.
     }else if (text.startsWith("*stopped")) {
+        if (isDebugOnInit())            // If debugOnInitFlag is raised, then release mutex lock
+        {
+            _debugOnInitStopMutex.lock();
+            _debugOnInitStopCv.notify_one();
+            _debugOnInitStopMutex.unlock();
+        }
         setGdbMultiarchRunningState(false);     // target stopped
         if (isNewHardwareBreakpointFlag() == true)
         {
@@ -973,10 +1002,117 @@ void SeerGdbWidget::handleText (const QString& text) {
 
         handleGdbTerminateExecutable(false);
 
-    } else if (text.startsWith("^done,BreakpointTable")) {
-        // request for current breakpoint on target
-        
-    }else{
+    } else if (text.startsWith("^done"))            // For handling debug on init
+    {
+        if (!isDebugOnInit())                       // if OpenOCD is running debug on init
+            return;
+        if (text == "^done")                        // When bp is disabled or enabled or when kernel module source is loaded
+        {
+            _debugOnInitHandleBpMutex.lock();
+            _debugOnInitHandleBpCv.notify_one();
+            _debugOnInitHandleBpMutex.unlock();             // release mutex and cond variable when bp is handled
+            _debugOnInitOperationMutex.lock();
+            _debugOnInitOperationCv.notify_one();
+            _debugOnInitOperationMutex.unlock();            // release mutex and cond variable when kernel module source is loaded
+            
+        }
+        else if (text.startsWith("^done,BreakpointTable"))  // request for current breakpoint on target
+        {
+            // If this function is already run
+            if (_debugOnInitBpReadFlag == true)
+                return;
+            _debugOnInitListBpMutex.lock();
+            // Copied from SeerBreakpointsBrowserWidget::handleText
+            QString newtext = Seer::filterEscapes(text);
+            QString body_text = Seer::parseFirst(text, "body=", '[', ']', false);
+            if (body_text != "") {
+                QStringList bkpt_list = Seer::parse(newtext, "bkpt=", '{', '}', false);
+                for (const auto& bkpt_text : bkpt_list) {
+                    QStringList items = Seer::parseCommaList(bkpt_text, '[', ']');
+                    QMap<QString,QString> keyValueMap = Seer::createKeyValueMap(items, '=');
+                    QString number_text            = Seer::filterBookends(keyValueMap["number"],            '"', '"');
+                    QString enabled_text           = Seer::filterBookends(keyValueMap["enabled"],           '"', '"');
+                    _mapListBpStatus.insert(number_text, enabled_text);
+                }
+            }
+            _debugOnInitBpReadFlag = true;
+            _debugOnInitListBpCv.notify_one();
+            _debugOnInitListBpMutex.unlock();
+        }
+        else if (text.startsWith("^done,bkpt"))             // request for add temp breakpoint when performing debug on init
+        {
+            if (_debugOnInitTempBpFlag == true)
+                return;
+            _debugOnInitHandleBpMutex.lock();
+            _debugOnInitTempBpFlag = true;
+            _debugOnInitHandleBpCv.notify_one();
+            _debugOnInitHandleBpMutex.unlock();             // release mutex and cond variable
+        }
+        else if (text.startsWith("^done,value"))             // request for reading kernel module allocation address
+        {
+            _debugOnInitOperationMutex.lock();
+            // format: ^done,value={{battr = {attr = {name = 0xffffff800e5d7380 \".note.gnu.build-id\", mode = 256}, 
+            // size = 19, private = 0x0, f_mapping = 0x0, read = 0xffffffc0800ba9fc <module_sect_read>, write = 0x0, 
+            // mmap = 0x0}, address = 18446743800871268352},
+            // What we need is name and address value
+            _mapKernelModuleAddress.clear();
+            int pos = 0;
+            while (true) {
+                int namePos = text.indexOf("name =", pos);
+                if (namePos == -1) break;
+
+                int quoteStart = text.indexOf('\"', namePos);
+                int quoteEnd = text.indexOf('\"', quoteStart + 1);
+                if (quoteStart == -1 || quoteEnd == -1) break;
+
+                QString sectionName = text.mid(quoteStart + 1, quoteEnd - quoteStart - 1);
+                while (1) {                 // remove redundant backslash
+                    if (!sectionName.isEmpty() && sectionName.back() == '\\') {
+                        sectionName.chop(1); // Removes the last character
+                    } else {
+                        break;
+                    }
+                }
+                int addrPos = text.indexOf("address =", quoteEnd);
+                if (addrPos == -1) break;
+
+                // Find next comma or closing brace to end the address number
+                int commaPos = text.indexOf(',', addrPos);
+                int bracePos = text.indexOf('}', addrPos);
+                int addrEnd;
+
+                if (commaPos == -1 && bracePos == -1) {
+                    addrEnd = text.length();
+                } else if (commaPos == -1) {
+                    addrEnd = bracePos;
+                } else if (bracePos == -1) {
+                    addrEnd = commaPos;
+                } else {
+                    addrEnd = qMin(commaPos, bracePos);
+                }
+
+                QString addrStr = text.mid(addrPos + 9, addrEnd - (addrPos + 9)).trimmed();
+                bool ok;
+                quint64 addrVal = addrStr.toULongLong(&ok);
+                if (ok) {
+                    // Zero-pad to 16 hex digits and lowercase
+                    QString addrHex = QString("0x%1").arg(addrVal, 16, 16, QChar('0')).toLower();
+                    _mapKernelModuleAddress[sectionName] = addrHex;
+                }
+                pos = addrEnd;
+            }
+            _initFuncAddress = _mapKernelModuleAddress.value(".init.text");
+            _debugOnInitOperationCv.notify_one();
+            _debugOnInitOperationMutex.unlock();             // release mutex and cond variable
+        }
+        else if (text.startsWith("^done,files"))            // request for refresh source code
+        { 
+            _debugOnInitRefreshSourceMutex.lock();
+            _debugOnInitRefreshSourceCv.notify_one();
+            _debugOnInitRefreshSourceMutex.unlock();
+        }
+    }
+    else{
         // All other text is ignored by this widget.
     }
 }
@@ -1047,11 +1183,21 @@ void SeerGdbWidget::handleGdbCommand (const QString& command) {
     QString str = command + "\n";    // Ensure there's a trailing RETURN.
 
     QByteArray bytes = str.toUtf8(); // 8-bit Unicode Transformation Format
-    // for debugging openocd only
+
+#if ENABLE_GDB_LOGOUT == 1
+    // Broadcast this log. For debugging
     emit allTextOutput("From Widget:" + str);
-    _gdbProcess->write(bytes);       // Send the data into the stdin stream of the bash child process
+#endif
+
+    qint64 bytesWritten = _gdbProcess->write(bytes);       // Send the data into the stdin stream of the bash child process
+    if (bytesWritten == -1) {
+        qWarning() << "Failed to write to process!";
+    } else {
+        qDebug() << "Wrote" << bytesWritten << "bytes to process.";
+    }
+
 }
-// 0x5555561bb180
+
 void SeerGdbWidget::handleGdbExit () {
 
     handleGdbCommand("-gdb-exit");
@@ -1088,7 +1234,7 @@ void SeerGdbWidget::handleGdbRunExecutable (const QString& breakMode, bool loadS
         if (isGdbRuning() == false) {
 
             // Connect the terminal to the console.
-            console()->resetTerminal();
+            // console()->resetTerminal();
             console()->connectTerminal();
 
             // Start gdb.
@@ -2237,8 +2383,31 @@ void SeerGdbWidget::handleGdbBreakpointEnable (QString breakpoints) {
         return;
     }
 
-    handleGdbCommand("-break-enable " + breakpoints);
-    handleGdbGenericpointList();
+    if (openocdWidget->isOpenocdRunning() == true && gdbProgram() == gdbMultiarchExePath() && \
+        _gdbProcess->state() == QProcess::Running && _gdbmultiarchPid > 0)
+    {
+        // if target is running
+        if (gdbMultiarchRunningState() == true)
+        {
+            setNewHardwareBreakpointFlag(true);
+            _gdbMonitor->setNewHardBreakpointFlag();
+            handleGdbInterruptSIGINT();
+            editorManagerWidget->setEnableOpenFile(false);
+            handleGdbCommand("-break-enable " + breakpoints);
+            handleGdbGenericpointList();
+            handleGdbContinue();
+        }
+        else    // simply enable bp
+        {
+            handleGdbCommand("-break-enable " + breakpoints);
+            handleGdbGenericpointList();
+        }
+    }
+    else
+    {
+        handleGdbCommand("-break-enable " + breakpoints);
+        handleGdbGenericpointList();
+    }
 }
 
 void SeerGdbWidget::handleGdbBreakpointDisable (QString breakpoints) {
@@ -2247,8 +2416,31 @@ void SeerGdbWidget::handleGdbBreakpointDisable (QString breakpoints) {
         return;
     }
 
-    handleGdbCommand("-break-disable " + breakpoints);
-    handleGdbGenericpointList();
+    if (openocdWidget->isOpenocdRunning() == true && gdbProgram() == gdbMultiarchExePath() && \
+        _gdbProcess->state() == QProcess::Running && _gdbmultiarchPid > 0)
+    {
+        // if target is running
+        if (gdbMultiarchRunningState() == true)
+        {
+            setNewHardwareBreakpointFlag(true);
+            _gdbMonitor->setNewHardBreakpointFlag();
+            handleGdbInterruptSIGINT();
+            editorManagerWidget->setEnableOpenFile(false);
+            handleGdbCommand("-break-disable " + breakpoints);
+            handleGdbGenericpointList();
+            handleGdbContinue();
+        }
+        else    // simply disable bp
+        {
+            handleGdbCommand("-break-disable " + breakpoints);
+            handleGdbGenericpointList();
+        }
+    }
+    else
+    {
+        handleGdbCommand("-break-disable " + breakpoints);
+        handleGdbGenericpointList();
+    }
 }
 
 void SeerGdbWidget::handleGdbBreakpointInfo (int breakpointid, QString breakpoint) {
@@ -4307,6 +4499,38 @@ const QString& SeerGdbWidget::gdbMultiarchCommand () {
 void SeerGdbWidget::setGdbMultiarchCommand (const QString& command) {
     _gdbMultiarchCommands = command;
 }
+
+// :: Docker
+bool SeerGdbWidget::isBuiltInDocker()
+{
+    return _isBuildInDocker;
+}
+
+void SeerGdbWidget::setBuiltInDocker(bool check)
+{
+    _isBuildInDocker = check;
+}
+
+const QString SeerGdbWidget::absoluteBuildFolderPath()
+{
+    return _absoluteBuildPath;
+}
+
+void SeerGdbWidget::setAbsoluteBuildFolderPath(const QString& path)
+{
+    _absoluteBuildPath = path;
+}
+
+const QString SeerGdbWidget::dockerBuildFolderPath()
+{
+    return _dockerBuildPath;
+}
+
+void SeerGdbWidget::setDockerBuildFolderPath(const QString& path)
+{
+    _dockerBuildPath = path;
+}
+
 // ::Kernel
 const QString& SeerGdbWidget::kernelSymbolPath () {
     return _kernelSymbolPath;
@@ -4331,6 +4555,45 @@ SeerOpenOCDWidget* SeerGdbWidget::openOCDWidgetInstance() {
 QProcess* SeerGdbWidget::openocdProcess() {
     return openocdWidget->openocdProcess();
 }
+
+// start gdb-multiarch, return true if success, false otherwise
+void SeerGdbWidget::setGdbMultiarchPid(int pid)
+{
+    if (gdbProgram() != gdbMultiarchExePath())
+        return;
+    _gdbmultiarchPid = pid;
+    setExecutablePid(pid);
+}
+
+void SeerGdbWidget::setNewHardwareBreakpointFlag(bool flag)
+{
+    _newHBreakFlag = flag;
+}
+
+bool SeerGdbWidget::isNewHardwareBreakpointFlag()
+{
+    return _newHBreakFlag;
+}
+
+void SeerGdbWidget::setGdbMultiarchRunningState(bool flag)
+{
+    _isTargetRunning = flag;
+}
+
+bool SeerGdbWidget::gdbMultiarchRunningState()
+{
+    return _isTargetRunning;
+}
+
+void SeerGdbWidget::setDebugOnInitFlag(bool flag)
+{
+    _debugOnInitFlag = flag;
+}
+
+bool SeerGdbWidget::isDebugOnInit()
+{
+    return _debugOnInitFlag;
+}
 /***********************************************************************************************************************
  * slot                                                                                                                *
 ***********************************************************************************************************************/
@@ -4354,6 +4617,11 @@ void SeerGdbWidget::handleGdbMultiarchOpenOCDExecutable()
     // Now, set _gdbProgram as gdb-multiarch, provided by openocd launch mode
     setGdbProgram(gdbMultiarchExePath());
     setGdbMultiarchRunningState(true);          // always assume that target is running
+    // Inform SeerSourceBrowserWidget that openOCD is running and if symbol file is built in docker, then _dockerBuildPath
+    // shall be replace by _absoluteBuildPath
+    _gdbMonitor->setBuiltInDocker(isBuiltInDocker());
+    _gdbMonitor->setAbsoluteBuildFolderPath(absoluteBuildFolderPath());
+    _gdbMonitor->setDockerBuildFolderPath(dockerBuildFolderPath());
     // OpenOCD works in connect mode, so use code of handleGdbConnectExecutable()
     qCDebug(LC) << "Starting 'openocd gdb-multiarch connect'";
 
@@ -4389,7 +4657,7 @@ void SeerGdbWidget::handleGdbMultiarchOpenOCDExecutable()
         }
 
         // No console for 'connect' mode but make sure it's reattached.
-        setExecutableLaunchMode("connect");
+        setExecutableLaunchMode("openocd");
         saveLaunchMode();
         setGdbRecordMode("auto");
         setGdbMultiarchPid(_gdbProcess->processId());
@@ -4404,10 +4672,9 @@ void SeerGdbWidget::handleGdbMultiarchOpenOCDExecutable()
             }
         }
         setGdbRemoteTargetType("extended-remote");
-
-        // Connect to the remote gdbserver using the proper remote type.
-        handleGdbCommand(QString("-target-select %1 :%2").arg(gdbRemoteTargetType()).arg(gdbPort()));
-
+        
+        // Handle additional gdb-multiarch command
+        handleGdbCommand(QString("%1").arg(gdbMultiarchCommand()));
         // Load the executable, if needed.
         if (newExecutableFlag() == true) {
             // handleGdbExecutableName();
@@ -4433,6 +4700,9 @@ void SeerGdbWidget::handleGdbMultiarchOpenOCDExecutable()
             handleGdbCommand("-gdb-set unwind-on-terminating-exception off");
         }
 
+        // Connect to the remote gdbserver using the proper remote type. Only do this when all symbol and source code is loaded
+        handleGdbCommand(QString("-target-select %1 :%2").arg(gdbRemoteTargetType()).arg(gdbPort()));
+
         // Set window titles with name of program.
         emit changeWindowTitle(QString("OpenOCD - Gdb-multiarch Debugging session (GDB pid = %1)").arg(_gdbProcess->processId()));
 
@@ -4448,40 +4718,223 @@ void SeerGdbWidget::handleGdbMultiarchOpenOCDExecutable()
 
 }
 
+// Promtp a dialog, tell user to input kernel module that they want to debug
+void SeerGdbWidget::handleDebugKernelModule()
+{
+    // 1. Read all breakpoints status, save it
+    // 2. Disable all breakpoints
+    // 3. Add breakpoint to module_init
+    // 4. Set temp breakpoint to 
+    // 5. Let target runs, pass command insmod to serial device
+    // 6. Wait until breakpoint reached, read data
+    // 7. Load kernel module to gdb-multiarch
+    // 8. Let target runs
+    SeerOpenOCDDebugOnInit dlg(this);
+    int ret = dlg.exec();
+    if (ret == 0)
+        return;
+    
+    _moduleName                 = dlg.moduleName();
+    _commandToTerm              = dlg.commandToTerm();
+    _kernelModuleSymbolPath     = dlg.kernelModuleSymbolPath();
+    _kernelModuleSourceCodePath = dlg.kernelModuleSourceCodePath();
+    _serialPortPath             = dlg.serialPortPath();
+    // Set Flag to tell the others function that openocd is handling
+    setDebugOnInitFlag(true);
+    // QObject::connect(_gdbMonitor, &GdbMonitor::caretTextOutput, this, &SeerGdbWidget::handleText);
+    // Problem: If handle all 1->8 in 1 continuous function then race condition will certainly occur. This is because
+    //          When handleGdbCommand is send, it take a while for gdb to respond. By that time, function would be over
+    //          thus it couldn't receive any data from gdb
+    // Solution: Multithread for task parallel execution, keeping mainwindow alive while child thread handle reading data
+    //           Mutex and conditional variable for synchronization between SeerGdbWidget::handleText and child thread
+    handleSyncSetConnection("connect");
+    _workerThread = QThread::create([this]() {
+        handleMultiThread();                    // Run your background logic here
+    });
+    QObject::connect(_workerThread, &QThread::finished, _workerThread, &QObject::deleteLater);
+    // QObject::connect(_workerThread, &SeerGdbWidget::debugOnInitContinue, this, &SeerGdbWidget::handleGdbContinue);
+    _workerThread->start();
+}
+
+// A threading function for handling openocd debug on init, it's not a slot. This acts as consumer, wait until 
+// producer SeerGdbWidget::handleText returns unlock
+void SeerGdbWidget::handleMultiThread()
+{
+    // 1. Read all breakpoints status, save it
+    _mapListBpStatus.clear();
+    _debugOnInitBpReadFlag = false;
+    _debugOnInitTempBpFlag = false;
+    _debugOnInitJustReadModuleDir = false;
+    handleSyncGdbInterruptSIGINT();                 // SIGINT      -> *stopped
+    handleSyncGdbGenericpointList();                // -break-list -> list bp ^done,BreakpointTable
+
+    // 2. Disable all breakpoints
+    for (auto it = _mapListBpStatus.begin(); it != _mapListBpStatus.end(); it ++)
+    {
+        handleSyncBreakDisable(it.key());
+    }
+
+    // 3. Add temp breakpoint to module_init at kernel/module/main.c
+    // First, look for full name of file kernel/module/main.c
+
+    // Now, let check which line has "return do_init_module(mod)"
+    handleSyncBreakInsert("-t -f --source \"/home/g703808/Documents/standard-ipq-repo/IPQ5424/O_0450/qca-networking-2025-ath-spf-13-0_qca_oem/qsdk/build_dir/target-aarch64_cortex-a55+neon-vfpv4_musl/linux-ipq54xx_generic/linux-6.6.47/kernel/module/main.c\" --line 3009");
+    handleSyncGdbContinue();                        // -exec-continue -> *stopped,reason="breakpoint-hit"
+    // 4. Send command insmod to serial terminal 
+    QString rmmodCmd = "rmmod " + _moduleName;
+    handleSyncSendToSerial(_serialPortPath, rmmodCmd);              // First, rmmod, for redundancy
+    handleSyncSendToSerial(_serialPortPath, _commandToTerm);        // And insmod
+    // 5. Wait until breakpoint reached, read kernel module adress: *mod->sect_attrs->attrs@mod->sect_attrs->nsections
+    _debugOnInitStopMutex.lock();
+    _debugOnInitStopCv.wait(&_debugOnInitStopMutex);
+    _debugOnInitStopMutex.unlock();
+    QString gdbReadExpr = "-data-evaluate-expression \"*mod->sect_attrs->attrs@mod->sect_attrs->nsections\"";
+    handleSyncManualGdbCommand(gdbReadExpr);
+    // 6. Load kernel module to gdb-multiarch with provided address
+
+    // load symbol
+    QString koPath = "/home/g703808/Desktop/board-recovery/example/hello.ko";
+    QString gdbLoadExpr = "add-symbol-file " + koPath + " ";
+    for (auto it = _mapKernelModuleAddress.begin(); it != _mapKernelModuleAddress.end(); it ++)
+    {
+        gdbLoadExpr += "-s " + it.key() + " " + it.value() + " ";
+    }
+    handleSyncManualGdbCommand(gdbLoadExpr);
+
+    // load source code
+    QString dirPath = "/home/g703808/Desktop/board-recovery/example";
+    QString loadCmd = "directory " + dirPath;
+    handleSyncManualGdbCommand(loadCmd);            // -> ^done
+    // now refresh source browser to load new kernel module source code
+    handleSyncRefreshSource();
+
+    // 8. Let's put breakpoint at _init function and run to it
+    QString initFuncbpCmd = "thbreak *" + _initFuncAddress;
+    handleSyncManualGdbCommand(initFuncbpCmd);
+    handleSyncGdbContinue();
+    // 9. Reload previous breakpoint. Let target run.
+    for (auto it = _mapListBpStatus.begin(); it != _mapListBpStatus.end(); it ++)
+    {
+        if (it.value() == "y")
+            handleSyncBreakEnable(it.key());
+        else
+            handleSyncBreakDisable(it.key());
+    }
+    setDebugOnInitFlag(false);                      // lower this flag, indicating debug on init thread ended
+     // We don't need to handle ^done,BreakpointTable event, equal to handleSyncSetConnection("disconnect");
+    emit requestChangeConnection("disconnect");
+    QMessageBox::warning(this, "Seer", "Debug on Init done.", QMessageBox::Ok);
+}
+
+// These below functions will emit signal back to MainWindow, and MainWindow will again invoke handler
+// from gdbWidget accordingly. This is to avoid invoking any Qprocess function inside QThread.
+// If we don't do this, program might be disrupted. Action buttons may not work and we cannot send any
+// command to openocd via gdb/mi command bar. This is just a temporary solution.
+void SeerGdbWidget::handleSyncGdbInterruptSIGINT()
+{
+    _debugOnInitStopMutex.lock();
+    handleGdbInterruptSIGINT();
+    _debugOnInitStopCv.wait(&_debugOnInitStopMutex);
+    _debugOnInitStopMutex.unlock();
+}
+
+void SeerGdbWidget::handleSyncGdbGenericpointList()
+{
+    _debugOnInitListBpMutex.lock();
+    emit requestBreakList();
+    _debugOnInitListBpCv.wait(&_debugOnInitListBpMutex);
+    _debugOnInitListBpMutex.unlock();
+}
+
+void SeerGdbWidget::handleSyncGdbContinue()
+{
+    _debugOnInitRunningMutex.lock();
+    emit requestContinue();
+    _debugOnInitRunningCv.wait(&_debugOnInitRunningMutex);
+    _debugOnInitRunningMutex.unlock();
+}
+
+void SeerGdbWidget::handleSyncBreakInsert (QString bp)
+{
+    _debugOnInitHandleBpMutex.lock();
+    emit requestBreakInsert(bp);
+    _debugOnInitHandleBpCv.wait(&_debugOnInitHandleBpMutex);
+    _debugOnInitHandleBpMutex.unlock();
+}
+
+void SeerGdbWidget::handleSyncBreakEnable (QString bp)
+{
+    _debugOnInitHandleBpMutex.lock();
+    emit requestBreakEnable(bp);
+    _debugOnInitHandleBpCv.wait(&_debugOnInitHandleBpMutex);
+    _debugOnInitHandleBpMutex.unlock();
+}
+
+void SeerGdbWidget::handleSyncBreakDisable (QString bp)
+{
+    _debugOnInitHandleBpMutex.lock();
+    emit requestBreakDisable(bp);
+    _debugOnInitHandleBpCv.wait(&_debugOnInitHandleBpMutex);
+    _debugOnInitHandleBpMutex.unlock();
+}
+
+// To establish connection to
+void SeerGdbWidget::handleSyncSetConnection(QString status)
+{
+    if (status == "connect")
+    {
+        QObject::connect(_gdbMonitor, &GdbMonitor::caretTextOutput, this, &SeerGdbWidget::handleText);
+    }
+    else if (status == "disconnect")
+    {
+        QObject::disconnect(_gdbMonitor, &GdbMonitor::caretTextOutput, this, &SeerGdbWidget::handleText);
+    }
+}
+
+void SeerGdbWidget::handleSyncManualGdbCommand(QString expression)
+{
+    _debugOnInitOperationMutex.lock();
+    emit requestGdbCommand(expression);
+    _debugOnInitOperationCv.wait(&_debugOnInitOperationMutex);
+    _debugOnInitOperationMutex.unlock();
+}
+
+void SeerGdbWidget::handleGdbReadVariable(QString expression)
+{
+    handleGdbCommand("-data-evaluate-expression \"" + expression + "\"");
+}
+
+void SeerGdbWidget::handleSyncSendToSerial(QString path, QString expression)
+{
+    _debugOnInitOperationMutex.lock();
+    emit requestSendToSerial(path,expression);
+    _debugOnInitOperationCv.wait(&_debugOnInitOperationMutex);
+    _debugOnInitOperationMutex.unlock();
+}
+
+void SeerGdbWidget::handleSendToSerial(QString path, QString expression)
+{
+    _debugOnInitOperationMutex.lock();
+    QProcess process;
+    QString cmd = "echo \"" + expression + "\" > " + path;
+    process.start("/bin/sh", QStringList() << "-c" << cmd);
+    process.waitForFinished();
+    QString output = process.readAllStandardOutput();
+    qDebug() << "ECho output: " << output.trimmed();
+    _debugOnInitOperationCv.notify_one();
+    _debugOnInitOperationMutex.unlock();
+}
+
+void SeerGdbWidget::handleSyncRefreshSource()
+{
+    _debugOnInitRefreshSourceMutex.lock();
+    emit requestRefreshSource();
+    _debugOnInitRefreshSourceCv.wait(&_debugOnInitRefreshSourceMutex);
+    _debugOnInitRefreshSourceMutex.unlock();
+    
+}
+
 void SeerGdbWidget::handleOpenOCDStartFailed()
 {
-    logsTabWidget->setCurrentIndex(7); // Switch to console tab
-}
-
-// start gdb-multiarch, return true if success, false otherwise
-bool SeerGdbWidget::startGdbMultiarch() {
-    return true;
-}
-
-void SeerGdbWidget::setGdbMultiarchPid(int pid)
-{
-    if (gdbProgram() != gdbMultiarchExePath())
-        return;
-    _gdbmultiarchPid = pid;
-    setExecutablePid(pid);
-}
-
-void SeerGdbWidget::setNewHardwareBreakpointFlag(bool flag)
-{
-    _newHBreakFlag = flag;
-}
-
-bool SeerGdbWidget::isNewHardwareBreakpointFlag()
-{
-    return _newHBreakFlag;
-}
-
-void SeerGdbWidget::setGdbMultiarchRunningState(bool flag)
-{
-    _isTargetRunning = flag;
-}
-
-bool SeerGdbWidget::gdbMultiarchRunningState()
-{
-    return _isTargetRunning;
+    logsTabWidget->setCurrentIndex(7); // Switch to openocd console tab
 }

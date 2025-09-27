@@ -14,6 +14,7 @@
 #include <QtCore/QJsonValue>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QDebug>
+#include <QtWidgets/QCheckBox>
 #include <QtGlobal>
 
 SeerDebugDialog::SeerDebugDialog (QWidget* parent) : QDialog(parent) {
@@ -86,6 +87,8 @@ SeerDebugDialog::SeerDebugDialog (QWidget* parent) : QDialog(parent) {
     QObject::connect(executableOpenOCDButton,              &QToolButton::clicked,               this, &SeerDebugDialog::handleExecutableOpenOCDButtonClicked);
     QObject::connect(openOCDKernelKernelSymbolPathButton,  &QToolButton::clicked,               this, &SeerDebugDialog::handleOpenOCDKernelSymbolPathButtonClicked);
     QObject::connect(openOCDKernelKernelDirPathButton,     &QToolButton::clicked,               this, &SeerDebugDialog::handleOpenOCDKernelDirPathButton);
+    QObject::connect(dockerCheckBox,                       &QCheckBox::clicked,                 this, &SeerDebugDialog::handleOpenOCDDockerCheckbox);
+    QObject::connect(absolutePathButton,                   &QToolButton::clicked,               this, &SeerDebugDialog::handleOpenOCDBuildFolderPathButton);
     // Set initial run mode.
     handleRunModeChanged(0);
 
@@ -682,13 +685,15 @@ void SeerDebugDialog::loadProject (const QString& filename, bool notify) {
     if (openocdModeJson.isEmpty() == false) {
 
         executableOpenOCDPathLineEdit           ->setText(openocdModeJson["openocdExe"].toString());
-        openOCD_GDB_Port_LineEdit               ->setText(openocdModeJson["gdbPort"].toString());
         openOCDCommandLineEdit                  ->setPlainText(openocdModeJson["openocdCommand"].toString());
         openOcdGdbMultiarchLineEdit             ->setText(openocdModeJson["gdbMultiarchExe"].toString());
+        openOCD_GDB_Port_LineEdit               ->setText(openocdModeJson["gdbPort"].toString());
         openOCDGdbCommandLineEdit               ->setText(openocdModeJson["gdbMultiarchCommand"].toString());
+        dockerCheckBox                          ->setChecked(openocdModeJson["dockerCheckBox"].toBool());
+        absolutePathLineEdit                    ->setText(openocdModeJson["absolutePathLineEdit"].toString());
+        dockerPathLineEdit                      ->setText(openocdModeJson["dockerPathLineEdit"].toString());
         openOCDKernelKernelSymbolLineEdit       ->setText(openocdModeJson["kernelSymbolPath"].toString());
         openOCDKernelKernelDirLineEdit          ->setText(openocdModeJson["kernelCodePath"].toString());
-        openOCDKernelModuleSymbolPathLineEdit   ->setText(openocdModeJson["kernelModuleSymbolPath"].toString());
         openOCD_GDB_Port_LineEdit               ->setText(openocdModeJson["kernelModuleCodePath"].toString());
 
         setLaunchMode("openocd");
@@ -817,13 +822,15 @@ void SeerDebugDialog::handleSaveProjectToolButton () {
         QJsonObject modeJson;
 
         modeJson["openocdExe"]              = executableOpenOCDPathLineEdit->text();
-        modeJson["gdbPort"]                 = openOCD_GDB_Port_LineEdit->text();
         modeJson["openocdCommand"]          = openOCDCommandLineEdit->toPlainText();
         modeJson["gdbMultiarchExe"]         = openOcdGdbMultiarchLineEdit->text();
+        modeJson["gdbPort"]                 = openOCD_GDB_Port_LineEdit->text();
         modeJson["gdbMultiarchCommand"]     = openOCDGdbCommandLineEdit->text();
+        modeJson["dockerCheckBox"]          = dockerCheckBox->isChecked();
+        modeJson["absolutePathLineEdit"]    = absolutePathLineEdit->text();
+        modeJson["dockerPathLineEdit"]      = dockerPathLineEdit->text();
         modeJson["kernelSymbolPath"]        = openOCDKernelKernelSymbolLineEdit->text();
         modeJson["kernelCodePath"]          = openOCDKernelKernelDirLineEdit->text();
-        modeJson["kernelModuleSymbolPath"]  = openOCDKernelModuleSymbolPathLineEdit->text();
         modeJson["kernelModuleCodePath"]    = openOCD_GDB_Port_LineEdit->text();
 
         seerProjectJson["openocdmode"] = modeJson;
@@ -932,12 +939,12 @@ void SeerDebugDialog::handleRunModeChanged (int id) {
 
     // ID = 5   OpenOCD
     if (id == 5) {
-        if (openOCDTabWidget->currentIndex() == 3) {
-            postCommandsPlainTextEdit->setVisible(false);
-            preCommandsPlainTextEdit->setVisible(false);
-        } else {
+        if (openOCDTabWidget->currentIndex() == 1) {
             postCommandsPlainTextEdit->setVisible(true);
             preCommandsPlainTextEdit->setVisible(true);
+        } else {
+            postCommandsPlainTextEdit->setVisible(false);
+            preCommandsPlainTextEdit->setVisible(false);
         }
     }
 }
@@ -1061,6 +1068,36 @@ const QString SeerDebugDialog::gdbMultiarchCommand () {
 void SeerDebugDialog::setGdbMultiarchCommand (const QString& command) {
     openOCDGdbCommandLineEdit->setText(command);
 }
+// :: Docker
+bool SeerDebugDialog::isBuiltInDocker()
+{
+    return dockerCheckBox->isChecked();
+}
+
+void SeerDebugDialog::setBuiltInDocker(bool check)
+{
+    dockerCheckBox->setChecked(check);
+}
+
+const QString SeerDebugDialog::absoluteBuildFolderPath()
+{
+    return absolutePathLineEdit->text();
+}
+
+void SeerDebugDialog::setAbsoluteBuildFolderPath(const QString& path)
+{
+    return absolutePathLineEdit->setText(path);
+}
+
+const QString SeerDebugDialog::dockerBuildFolderPath()
+{
+    return dockerPathLineEdit->text();
+}
+
+void SeerDebugDialog::setDockerBuildFolderPath(const QString& path)
+{
+    return dockerPathLineEdit->setText(path);
+}
 // ::Kernel
 const QString SeerDebugDialog::kernelSymbolPath () {
     return openOCDKernelKernelSymbolLineEdit->text();
@@ -1092,17 +1129,18 @@ void SeerDebugDialog::handleOpenOCDDefaultButtonClicked() {
 // When OpenOCD Tab changed
 void SeerDebugDialog::handleOpenOCDTabChanged(int id)
 {
-    // When Kernel Module Tab is selected, hide pre/post gdb commands
-    if (id == 3)
-    {
-        postCommandsPlainTextEdit->setVisible(false);
-        preCommandsPlainTextEdit->setVisible(false);
-    }
-    else    // Every other tab selected, show pre/post gdb commands
+    // When gdb Tab is selected, hide pre/post gdb commands
+    if (id == 1)
     {
         postCommandsPlainTextEdit->setVisible(true);
         preCommandsPlainTextEdit->setVisible(true);
     }
+    else    // Every other tab selected, don't show pre/post gdb commands
+    {
+        postCommandsPlainTextEdit->setVisible(false);
+        preCommandsPlainTextEdit->setVisible(false);
+    }
+    
 }
 
 void SeerDebugDialog::handleExecutableOpenOCDButtonClicked () {
@@ -1126,5 +1164,28 @@ void SeerDebugDialog::handleOpenOCDKernelDirPathButton () {
 
     if (name != "") {
         setKernelCodePath(name);
+    }
+}
+
+void SeerDebugDialog::handleOpenOCDDockerCheckbox()
+{
+    if (dockerCheckBox->isChecked())
+    {
+        absolutePathLineEdit->setEnabled(true);
+        dockerPathLineEdit->setEnabled(true);
+    }
+    else
+    {
+        absolutePathLineEdit->setEnabled(false);
+        dockerPathLineEdit->setEnabled(false);
+    }
+}
+
+void SeerDebugDialog::handleOpenOCDBuildFolderPathButton () {
+    QString name = QFileDialog::getExistingDirectory(this, "Select build folder.", absoluteBuildFolderPath(), \
+                                                        QFileDialog::ShowDirsOnly|QFileDialog::DontUseNativeDialog);
+
+    if (name != "") {
+        setAbsoluteBuildFolderPath(name);
     }
 }

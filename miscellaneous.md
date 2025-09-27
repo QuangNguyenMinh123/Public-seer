@@ -16,10 +16,19 @@
     while target is running and enable them when target is halted (this can fix some bug)
 11. check: test stepi and nexti on openocd
 12. Add multiple backtrace pointer color (like vscode) (already deployed)                       ✗
-13. Debug kernel (HIGH PRIORITY)
+13. Debug kernel (HIGH PRIORITY)                                                                ... seem unstable
 14. Debug kernel module (HIGH PRIORITY)
 15. Add status indicator, display status: running, stopped, stop at breakpoint, disconnected,
     running core. (enhance SeerRunStatusIndicatorBox)                                           ... (disconnected will be fixed along with openocd)
+16. add docker config path                                                                      ✓
+17. Can I track code when press ctrl + left click?
+18. Can I go back to previous tab like vscode?
+19. On Source info: search regex...: can I input kernel/module/main.c and seer look that for me?
+20. Check file availability before run debug on init, load kernel, kernel module ...
+21. When bp is disabled, enabled, will its status be displayed accordingly?
+            (yes, it works on desktop app but not with openocd)                                 ✓
+22. Why don't we add macro to enable/disable debug on cmakelist?                                ✓ enable on cmake
+23. Add reset target for openocd
 # Bug:
 - Insert, remove breakpoint during running for openocd (HIGH PRIORITY)                                              ✓
 - Breakpoints don't show up in "Breakpoints" Tab for openocd                                                        ✓
@@ -34,6 +43,10 @@
 - when re-open openocd launch mode then close seergdb, causing hang up on exit (not clear if it is major bug)       ✗
 - on debugging math_toolkit, cannot close nanosleep.c source code tab                                               ✓
 - Bug: on hitting breakpoints, continue, next, step button aren't enabled                                           ✓
+- When actiongdbterminate button is clicked when program/target is running, run status bar (bottom right) and
+    cursor doesn't return to normal                                                                                 ✓
+- Check when finish button is clicked (on desktop)
+- click on openocd menubar -> esc -> openocd menubar disappear
 
 # To fix attach to target issue
 2 solutions:
@@ -106,3 +119,10 @@ export PATH=$HOME/Qt/6.6.0/bin:$PATH
 export LD_LIBRARY_PATH=#HOME/Qt/6.6.0/lib:$LD_LIBRARY_PATH
 ```
 run `qmake -v` to verify
+
+#
+$ sudo lsof -i :3333
+COMMAND       PID    USER   FD   TYPE  DEVICE SIZE/OFF NODE NAME
+openocd   2953829 g703808    8u  IPv4 9597687      0t0  TCP *:3333 (LISTEN)
+openocd   2953829 g703808   11u  IPv4 9666948      0t0  TCP localhost:3333->localhost:41664 (ESTABLISHED)
+gdb-multi 2953831 g703808    9u  IPv4 9701167      0t0  TCP localhost:41664->localhost:3333 (ESTABLISHED)

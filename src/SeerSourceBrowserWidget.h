@@ -25,7 +25,7 @@ class SeerSourceBrowserWidget : public QWidget, protected Ui::SeerSourceBrowserW
         void                        setIgnoreFilePatterns       (const QStringList& patterns);
         const QStringList&          ignoreFilePatterns          () const;
 
-    public slots:
+        public slots:
         void                        handleText                  (const QString& text);
         void                        handleSessionTerminated     ();
         void                        refresh                     ();

@@ -1,5 +1,4 @@
 #include "SeerOpenOCDWidget.h"
-
 #include <QtCore/QtCore>
 #include <QtCore/QProcess>
 #include <QMessageBox>
@@ -7,6 +6,7 @@
  * Constructor & Destructor                                                                                           *
 ***********************************************************************************************************************/
 SeerOpenOCDWidget::SeerOpenOCDWidget (QWidget* parent) {
+    Q_UNUSED(parent);
     _openocdProcess = new QProcess(this);
     _openocdArguments = "";
     _openocdlogsTabWidget = nullptr;
@@ -55,7 +55,7 @@ void SeerOpenOCDWidget::killOpenOCD ()
     {
         if (_openocdProcess->state() == QProcess::Running) {
             _openocdProcess->kill();
-            _openocdProcess->waitForFinished();
+             _openocdProcess->waitForFinished();
             delete _openocdProcess;
             _openocdProcess = nullptr;
         }
@@ -71,7 +71,7 @@ bool SeerOpenOCDWidget::isOpenocdRunning ()
     return false;
 }
 /***********************************************************************************************************************
- * Create a new console display for displaying openOCD log                                                               
+ * Create a new console display for displaying openOCD log                                                             *
 ***********************************************************************************************************************/
 void SeerOpenOCDWidget::createOpenOCDConsole (QDetachTabWidget* parent)
 {
@@ -101,9 +101,9 @@ void SeerOpenOCDWidget::setConsoleVisible (bool flag)
 {
     _openocdlogsTabWidget->setVisible(flag);
 }
-/*******************************************************************************************************************
- * Slot                                                                                                            *
-*******************************************************************************************************************/
+/***********************************************************************************************************************
+ * Slot                                                                                                                *
+***********************************************************************************************************************/
 void SeerOpenOCDWidget::handleReadOutput ()
 {
     QString Text = QString::fromLocal8Bit(_openocdProcess->readAllStandardOutput());
@@ -126,5 +126,3 @@ void SeerOpenOCDWidget::handleReadError ()
     }
     _openocdlogsTabWidget->handleText(Text);
 }
-
-

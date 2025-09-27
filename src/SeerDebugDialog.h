@@ -91,6 +91,13 @@ class SeerDebugDialog : public QDialog, protected Ui::SeerDebugDialogForm {
         void                                setGdbMultiarchExePath              (const QString& path);
         const QString                       gdbMultiarchCommand                 ();
         void                                setGdbMultiarchCommand              (const QString& command);
+        // ::Docker
+        bool                                isBuiltInDocker                     ();
+        void                                setBuiltInDocker                    (bool check);
+        const QString                       absoluteBuildFolderPath             ();
+        void                                setAbsoluteBuildFolderPath          (const QString& path);
+        const QString                       dockerBuildFolderPath               ();
+        void                                setDockerBuildFolderPath            (const QString& path);
         // ::Kernel
         const QString                       kernelSymbolPath                    ();
         void                                setKernelSymbolPath                 (const QString& path);
@@ -116,6 +123,7 @@ class SeerDebugDialog : public QDialog, protected Ui::SeerDebugDialogForm {
         void                    handleExecutableOpenOCDButtonClicked            ();
         void                    handleOpenOCDKernelSymbolPathButtonClicked      ();
         void                    handleOpenOCDKernelDirPathButton                ();
+        void                    handleOpenOCDBuildFolderPathButton              ();
 
     private slots:
         void                    handleHelpModeToolButtonClicked                 ();
@@ -124,6 +132,7 @@ class SeerDebugDialog : public QDialog, protected Ui::SeerDebugDialogForm {
         void                    handleHelpConnectToolButtonClicked              ();
         void                    handleHelpRRToolButtonClicked                   ();
         void                    handleHelpCorefileToolButtonClicked             ();
+        void                    handleOpenOCDDockerCheckbox                     ();
 
     protected:
         void                    writeSettings                                   ();

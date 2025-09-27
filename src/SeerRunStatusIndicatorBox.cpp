@@ -60,11 +60,11 @@ void SeerRunStatusIndicatorBox::setRunStatus (SeerRunStatusIndicatorBox::RunStat
     else if (status == RunStatus::Running) {
         QApplication::setOverrideCursor(Qt::BusyCursor);
         statusLabel->setText("Running");
-        statusLabel->setStyleSheet("background-color: lightgreen; color: black; font-weight: bold;");
+        statusLabel->setStyleSheet("background-color: green; color: black; font-weight: bold;");
 
     }
     else if (status == RunStatus::Disconnect) {
-        QApplication::setOverrideCursor(Qt::BusyCursor);
+        QApplication::restoreOverrideCursor();
         statusLabel->setText("DISCONNECTED");
         statusLabel->setStyleSheet("background-color: red; color: black; font-weight: bold;");
 
@@ -96,6 +96,10 @@ void SeerRunStatusIndicatorBox::handleText (const QString& text) {
             //^connected,frame={level=\"0\",addr=\"0x00007f48351f80c1\",func=\"read\",args=[],from=\"/lib64/libc.so.6\",arch=\"i386:x86-64\"}"
             setRunStatus(SeerRunStatusIndicatorBox::Stopped);
 
+    }else if (text.startsWith("^done,stack")) {
+        // When finish command is invoked
+        setRunStatus(SeerRunStatusIndicatorBox::Stopped);
+
     }else if (text.startsWith("=thread-exited")) {
 
         //=thread-exited,id="1",group-id="i1"
@@ -122,9 +126,12 @@ void SeerRunStatusIndicatorBox::setCore(int coreIdx)
     coreLabel->setStyleSheet("background-color: lightgray; color: black; font-weight: bold;");
 }
 
+// handle when program stop/ killed
 void SeerRunStatusIndicatorBox::handleTerminate() {
     coreLabel->setText("Core");
     coreLabel->setStyleSheet("background-color: lightgray; color: black; font-weight: bold;");
     statusLabel->setText("Status");
     statusLabel->setStyleSheet("background-color: lightgray; color: black; font-weight: bold;");
+    // also tell SeerProgressIndicator to stop spinning
+    setRunStatus(SeerRunStatusIndicatorBox::Stopped);
 }
