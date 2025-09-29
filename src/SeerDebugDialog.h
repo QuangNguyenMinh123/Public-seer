@@ -86,6 +86,8 @@ class SeerDebugDialog : public QDialog, protected Ui::SeerDebugDialogForm {
         void                                setGdbPort                          (const QString& port);
         const QString                       openOCDCommand                      ();
         void                                setOpenOCDCommand                   (const QString& command);
+        const QString                       telnetPort                          ();
+        void                                setTelnetPort                       (const QString& port);
         // ::GDB Multiarch
         const QString                       gdbMultiarchExePath                 ();
         void                                setGdbMultiarchExePath              (const QString& path);
@@ -102,7 +104,7 @@ class SeerDebugDialog : public QDialog, protected Ui::SeerDebugDialogForm {
         const QString                       kernelSymbolPath                    ();
         void                                setKernelSymbolPath                 (const QString& path);
         const QString                       kernelCodePath                      ();
-        void                                setKernelCodePath                   (const QString& path);    
+        void                                setKernelCodePath                   (const QString& path);
 
     protected slots:
         void                    handleExecutableNameToolButton                  ();
@@ -133,6 +135,7 @@ class SeerDebugDialog : public QDialog, protected Ui::SeerDebugDialogForm {
         void                    handleHelpRRToolButtonClicked                   ();
         void                    handleHelpCorefileToolButtonClicked             ();
         void                    handleOpenOCDDockerCheckbox                     ();
+        void                    handleOpenOCDMainHelpButtonClicked              ();
 
     protected:
         void                    writeSettings                                   ();

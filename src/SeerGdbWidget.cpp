@@ -3437,6 +3437,7 @@ void SeerGdbWidget::handleHelpToolButtonClicked () {
 
     SeerHelpPageDialog* help = new SeerHelpPageDialog;
     help->loadFile(":/seer/resources/help/BreakpointGdbSeerManager.md");
+    help->setWindowFlags(help->windowFlags() | Qt::WindowStaysOnTopHint);
     help->show();
     help->raise();
 }
@@ -4473,6 +4474,14 @@ const QString& SeerGdbWidget::gdbPort() {
 
 void SeerGdbWidget::setGdbPort (const QString& port){
     _GDBPort = port;
+}
+
+const QString& SeerGdbWidget::telnetPort() {
+    return _TelnetPort;
+}
+
+void SeerGdbWidget::setTelnetPort (const QString& port){
+    _TelnetPort = port;
 }
 
 const QString& SeerGdbWidget::openOCDCommand() {

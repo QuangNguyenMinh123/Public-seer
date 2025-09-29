@@ -7,71 +7,13 @@
     <x>0</x>
     <y>0</y>
     <width>1264</width>
-    <height>857</height>
+    <height>868</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Select Executable to Debug</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_12">
-   <item row="0" column="0">
-    <widget class="QGroupBox" name="executableNameGroupBox">
-     <property name="title">
-      <string>Executable Name</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-     </property>
-     <property name="flat">
-      <bool>false</bool>
-     </property>
-     <layout class="QVBoxLayout" name="verticalLayout">
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_3">
-        <item>
-         <widget class="QLineEdit" name="executableNameLineEdit">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="toolTip">
-           <string>The path and name of an executable to debug.</string>
-          </property>
-          <property name="placeholderText">
-           <string>The path and name of an executable to debug.</string>
-          </property>
-          <property name="clearButtonEnabled">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QToolButton" name="executableNameToolButton">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="toolTip">
-           <string>Open a dialog to select an executable.</string>
-          </property>
-          <property name="text">
-           <string/>
-          </property>
-          <property name="icon">
-           <iconset resource="resource.qrc">
-            <normaloff>:/seer/resources/RelaxLightIcons/document-open.svg</normaloff>:/seer/resources/RelaxLightIcons/document-open.svg</iconset>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-     </layout>
-    </widget>
-   </item>
    <item row="4" column="0">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
@@ -80,52 +22,6 @@
      <property name="standardButtons">
       <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
      </property>
-    </widget>
-   </item>
-   <item row="2" column="0">
-    <widget class="QGroupBox" name="executableWorkingDirectoryGroupBox">
-     <property name="toolTip">
-      <string/>
-     </property>
-     <property name="title">
-      <string>Working Directory</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-     </property>
-     <layout class="QVBoxLayout" name="verticalLayout_3">
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_5">
-        <item>
-         <widget class="QLineEdit" name="executableWorkingDirectoryLineEdit">
-          <property name="toolTip">
-           <string>The working directory path to tell GDB. Default current directory.</string>
-          </property>
-          <property name="placeholderText">
-           <string>The working directory path to tell GDB. Default current directory.</string>
-          </property>
-          <property name="clearButtonEnabled">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QToolButton" name="executableWorkingDirectoryToolButton">
-          <property name="toolTip">
-           <string>Open a dialog to select a path.</string>
-          </property>
-          <property name="text">
-           <string/>
-          </property>
-          <property name="icon">
-           <iconset resource="resource.qrc">
-            <normaloff>:/seer/resources/RelaxLightIcons/document-open.svg</normaloff>:/seer/resources/RelaxLightIcons/document-open.svg</iconset>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-     </layout>
     </widget>
    </item>
    <item row="3" column="0">
@@ -934,8 +830,8 @@
                <attribute name="title">
                 <string>Main</string>
                </attribute>
-               <layout class="QGridLayout" name="gridLayout">
-                <item row="0" column="0">
+               <layout class="QVBoxLayout" name="verticalLayout_4">
+                <item>
                  <layout class="QHBoxLayout" name="horizontalLayout_25">
                   <item>
                    <widget class="QLabel" name="openOCDMainSettingLabel">
@@ -952,7 +848,7 @@
                     <property name="sizeHint" stdset="0">
                      <size>
                       <width>40</width>
-                      <height>20</height>
+                      <height>33</height>
                      </size>
                     </property>
                    </spacer>
@@ -973,110 +869,139 @@
                   </item>
                  </layout>
                 </item>
-                <item row="1" column="0">
-                 <widget class="QGroupBox" name="executableNameGroupBox_2">
-                  <property name="enabled">
-                   <bool>true</bool>
-                  </property>
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="maximumSize">
-                   <size>
-                    <width>16777215</width>
-                    <height>45</height>
-                   </size>
-                  </property>
-                  <property name="sizeIncrement">
-                   <size>
-                    <width>20</width>
-                    <height>0</height>
-                   </size>
-                  </property>
-                  <property name="title">
-                   <string notr="true"/>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-                  </property>
-                  <property name="flat">
-                   <bool>false</bool>
-                  </property>
-                  <layout class="QGridLayout" name="gridLayout_13">
-                   <item row="0" column="0">
-                    <widget class="QLabel" name="executableOpenOCDPathLabel">
-                     <property name="text">
-                      <string>OpenOCD Executable path</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="0" column="1">
-                    <widget class="QLineEdit" name="executableOpenOCDPathLineEdit">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="minimumSize">
-                      <size>
-                       <width>20</width>
-                       <height>20</height>
-                      </size>
-                     </property>
-                     <property name="sizeIncrement">
-                      <size>
-                       <width>20</width>
-                       <height>30</height>
-                      </size>
-                     </property>
-                     <property name="baseSize">
-                      <size>
-                       <width>30</width>
-                       <height>30</height>
-                      </size>
-                     </property>
-                     <property name="toolTip">
-                      <string>Specify OpenOCD</string>
-                     </property>
-                     <property name="dragEnabled">
-                      <bool>false</bool>
-                     </property>
-                     <property name="placeholderText">
-                      <string>Specify OpenOCD</string>
-                     </property>
-                     <property name="clearButtonEnabled">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="0" column="2">
-                    <widget class="QToolButton" name="executableOpenOCDButton">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="toolTip">
-                      <string>Open a dialog to select an executable.</string>
-                     </property>
-                     <property name="text">
-                      <string/>
-                     </property>
-                     <property name="icon">
-                      <iconset resource="resource.qrc">
-                       <normaloff>:/seer/resources/RelaxLightIcons/document-open.svg</normaloff>:/seer/resources/RelaxLightIcons/document-open.svg</iconset>
-                     </property>
-                    </widget>
-                   </item>
-                  </layout>
-                 </widget>
+                <item>
+                 <layout class="QGridLayout" name="gridLayout_18">
+                  <item row="0" column="0">
+                   <widget class="QGroupBox" name="executableNameGroupBox_2">
+                    <property name="enabled">
+                     <bool>true</bool>
+                    </property>
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>16777215</width>
+                      <height>45</height>
+                     </size>
+                    </property>
+                    <property name="sizeIncrement">
+                     <size>
+                      <width>20</width>
+                      <height>0</height>
+                     </size>
+                    </property>
+                    <property name="title">
+                     <string notr="true"/>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+                    </property>
+                    <property name="flat">
+                     <bool>false</bool>
+                    </property>
+                    <layout class="QHBoxLayout" name="horizontalLayout_2">
+                     <item>
+                      <widget class="QLabel" name="executableOpenOCDPathLabel">
+                       <property name="text">
+                        <string>OpenOCD Executable path</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLineEdit" name="executableOpenOCDPathLineEdit">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="minimumSize">
+                        <size>
+                         <width>24</width>
+                         <height>23</height>
+                        </size>
+                       </property>
+                       <property name="sizeIncrement">
+                        <size>
+                         <width>20</width>
+                         <height>30</height>
+                        </size>
+                       </property>
+                       <property name="baseSize">
+                        <size>
+                         <width>30</width>
+                         <height>30</height>
+                        </size>
+                       </property>
+                       <property name="toolTip">
+                        <string>Specify OpenOCD.</string>
+                       </property>
+                       <property name="dragEnabled">
+                        <bool>false</bool>
+                       </property>
+                       <property name="placeholderText">
+                        <string>Specify OpenOCD</string>
+                       </property>
+                       <property name="clearButtonEnabled">
+                        <bool>true</bool>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QToolButton" name="executableOpenOCDButton">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="minimumSize">
+                        <size>
+                         <width>24</width>
+                         <height>23</height>
+                        </size>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>24</width>
+                         <height>23</height>
+                        </size>
+                       </property>
+                       <property name="toolTip">
+                        <string>Open a dialog to select an executable.</string>
+                       </property>
+                       <property name="text">
+                        <string/>
+                       </property>
+                       <property name="icon">
+                        <iconset resource="resource.qrc">
+                         <normaloff>:/seer/resources/RelaxLightIcons/document-open.svg</normaloff>:/seer/resources/RelaxLightIcons/document-open.svg</iconset>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </widget>
+                  </item>
+                  <item row="0" column="1">
+                   <widget class="QPushButton" name="openOCDMainDefaultSettingButton">
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>25</height>
+                     </size>
+                    </property>
+                    <property name="text">
+                     <string>Default Setting</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
                 </item>
-                <item row="2" column="0">
+                <item>
                  <widget class="QGroupBox" name="executableNameGroupBox_6">
                   <property name="enabled">
                    <bool>true</bool>
@@ -1106,6 +1031,9 @@
                    </item>
                    <item>
                     <widget class="QPlainTextEdit" name="openOCDCommandLineEdit">
+                     <property name="toolTip">
+                      <string>OpenOCD commands</string>
+                     </property>
                      <property name="placeholderText">
                       <string>OpenOCD additional command. Eg: -f &lt;path to&gt;/jlink.cfg -f &lt;path to&gt;/bluepill.cfg</string>
                      </property>
@@ -1114,7 +1042,7 @@
                   </layout>
                  </widget>
                 </item>
-                <item row="3" column="0">
+                <item>
                  <spacer name="verticalSpacer_4">
                   <property name="orientation">
                    <enum>Qt::Vertical</enum>
@@ -1133,7 +1061,7 @@
                <attribute name="title">
                 <string>GDB Multiarch</string>
                </attribute>
-               <layout class="QGridLayout" name="gridLayout_16">
+               <layout class="QGridLayout" name="gridLayout_10">
                 <item row="0" column="0">
                  <layout class="QHBoxLayout" name="horizontalLayout_28">
                   <item>
@@ -1172,58 +1100,74 @@
                   <property name="flat">
                    <bool>false</bool>
                   </property>
-                  <layout class="QHBoxLayout" name="horizontalLayout_23">
-                   <item>
-                    <widget class="QLabel" name="openOcdGdbMultiarchPathLabel">
-                     <property name="text">
-                      <string>GDB Multiarch Executable</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QLineEdit" name="openOcdGdbMultiarchLineEdit">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="toolTip">
-                      <string>Specify OpenOCD</string>
-                     </property>
-                     <property name="placeholderText">
-                      <string>Specify GDB Multiarch. Eg: /usr/bin/gdb-multiarch</string>
-                     </property>
-                     <property name="clearButtonEnabled">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QToolButton" name="openOcdGdbMultiarchHelpButton">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="toolTip">
-                      <string>Open a dialog to select an executable.</string>
-                     </property>
-                     <property name="text">
-                      <string/>
-                     </property>
-                     <property name="icon">
-                      <iconset resource="resource.qrc">
-                       <normaloff>:/seer/resources/RelaxLightIcons/document-open.svg</normaloff>:/seer/resources/RelaxLightIcons/document-open.svg</iconset>
-                     </property>
-                    </widget>
+                  <layout class="QGridLayout" name="gridLayout_14">
+                   <item row="0" column="0">
+                    <layout class="QHBoxLayout" name="horizontalLayout_19">
+                     <item>
+                      <widget class="QLabel" name="openOcdGdbMultiarchPathLabel">
+                       <property name="text">
+                        <string>GDB Multiarch Executable</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLineEdit" name="openOcdGdbMultiarchLineEdit">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="toolTip">
+                        <string>Specify GDB Multiarch</string>
+                       </property>
+                       <property name="placeholderText">
+                        <string>Specify GDB Multiarch. Eg: /usr/bin/gdb-multiarch</string>
+                       </property>
+                       <property name="clearButtonEnabled">
+                        <bool>true</bool>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QToolButton" name="openOcdGdbMultiarchHelpButton">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="minimumSize">
+                        <size>
+                         <width>24</width>
+                         <height>23</height>
+                        </size>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>24</width>
+                         <height>23</height>
+                        </size>
+                       </property>
+                       <property name="toolTip">
+                        <string>Open a dialog to select an executable.</string>
+                       </property>
+                       <property name="text">
+                        <string/>
+                       </property>
+                       <property name="icon">
+                        <iconset resource="resource.qrc">
+                         <normaloff>:/seer/resources/RelaxLightIcons/document-open.svg</normaloff>:/seer/resources/RelaxLightIcons/document-open.svg</iconset>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
                    </item>
                   </layout>
                  </widget>
                 </item>
                 <item row="2" column="0">
-                 <layout class="QHBoxLayout" name="horizontalLayout_29">
+                 <layout class="QHBoxLayout" name="horizontalLayout_15">
                   <item>
                    <widget class="QGroupBox" name="executableNameGroupBox_3">
                     <property name="enabled">
@@ -1238,73 +1182,86 @@
                     <property name="flat">
                      <bool>false</bool>
                     </property>
-                    <layout class="QHBoxLayout" name="horizontalLayout_19">
-                     <item>
-                      <widget class="QLabel" name="openOCD_GDB_Port_Label">
-                       <property name="text">
-                        <string>GDB port</string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item>
-                      <widget class="QLineEdit" name="openOCD_GDB_Port_LineEdit">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="toolTip">
-                        <string>Specify GDB port</string>
-                       </property>
-                       <property name="placeholderText">
-                        <string>Specify GDB port</string>
-                       </property>
-                       <property name="clearButtonEnabled">
-                        <bool>true</bool>
-                       </property>
-                      </widget>
-                     </item>
-                    </layout>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QGroupBox" name="groupBox_3">
-                    <property name="title">
-                     <string/>
-                    </property>
-                    <layout class="QGridLayout" name="gridLayout_14">
+                    <layout class="QGridLayout" name="gridLayout">
                      <item row="0" column="0">
-                      <widget class="QLabel" name="openOCD_GDB_Port_Label_2">
-                       <property name="text">
-                        <string>Serial Port</string>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="0" column="1">
-                      <widget class="QComboBox" name="serialComboBox">
-                       <property name="minimumSize">
-                        <size>
-                         <width>150</width>
-                         <height>0</height>
-                        </size>
-                       </property>
-                      </widget>
+                      <layout class="QHBoxLayout" name="horizontalLayout_26">
+                       <item>
+                        <widget class="QLabel" name="openOCD_GDB_Port_Label">
+                         <property name="text">
+                          <string>GDB port</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QLineEdit" name="openOCD_GDB_Port_LineEdit">
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="toolTip">
+                          <string>Specify GDB port</string>
+                         </property>
+                         <property name="placeholderText">
+                          <string>Specify GDB port</string>
+                         </property>
+                         <property name="clearButtonEnabled">
+                          <bool>true</bool>
+                         </property>
+                        </widget>
+                       </item>
+                      </layout>
                      </item>
                     </layout>
                    </widget>
                   </item>
                   <item>
-                   <widget class="QPushButton" name="openOCDMainDefaultSettingButton">
-                    <property name="maximumSize">
-                     <size>
-                      <width>200</width>
-                      <height>16777215</height>
-                     </size>
+                   <widget class="QGroupBox" name="executableNameGroupBox_4">
+                    <property name="enabled">
+                     <bool>true</bool>
                     </property>
-                    <property name="text">
-                     <string>Default setting</string>
+                    <property name="title">
+                     <string notr="true"/>
                     </property>
+                    <property name="alignment">
+                     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+                    </property>
+                    <property name="flat">
+                     <bool>false</bool>
+                    </property>
+                    <layout class="QGridLayout" name="gridLayout_13">
+                     <item row="0" column="0">
+                      <layout class="QHBoxLayout" name="horizontalLayout_24">
+                       <item>
+                        <widget class="QLabel" name="openOCD_GDB_Port_Label_2">
+                         <property name="text">
+                          <string>Telnet port</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QLineEdit" name="openOCD_Telnet_Port_LineEdit">
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="toolTip">
+                          <string>Specify Telnet port</string>
+                         </property>
+                         <property name="placeholderText">
+                          <string>Specify Telnet port</string>
+                         </property>
+                         <property name="clearButtonEnabled">
+                          <bool>true</bool>
+                         </property>
+                        </widget>
+                       </item>
+                      </layout>
+                     </item>
+                    </layout>
                    </widget>
                   </item>
                  </layout>
@@ -1323,52 +1280,68 @@
                   <property name="flat">
                    <bool>false</bool>
                   </property>
-                  <layout class="QHBoxLayout" name="horizontalLayout_24">
-                   <item>
-                    <widget class="QLabel" name="executableOpenOCDPathLabel_3">
-                     <property name="text">
-                      <string>GDB Multiarch Additional Command</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QLineEdit" name="openOCDGdbCommandLineEdit">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="toolTip">
-                      <string>Specify OpenOCD</string>
-                     </property>
-                     <property name="placeholderText">
-                      <string>Additional Command</string>
-                     </property>
-                     <property name="clearButtonEnabled">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QToolButton" name="executableOpenOCDButton_3">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="toolTip">
-                      <string>Open a dialog to select an executable.</string>
-                     </property>
-                     <property name="text">
-                      <string/>
-                     </property>
-                     <property name="icon">
-                      <iconset resource="resource.qrc">
-                       <normaloff>:/seer/resources/RelaxLightIcons/document-open.svg</normaloff>:/seer/resources/RelaxLightIcons/document-open.svg</iconset>
-                     </property>
-                    </widget>
+                  <layout class="QGridLayout" name="gridLayout_16">
+                   <item row="0" column="0">
+                    <layout class="QHBoxLayout" name="horizontalLayout_23">
+                     <item>
+                      <widget class="QLabel" name="executableOpenOCDPathLabel_3">
+                       <property name="text">
+                        <string>GDB Multiarch Additional Command</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLineEdit" name="openOCDGdbCommandLineEdit">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="toolTip">
+                        <string>GDB Multiarch additional command</string>
+                       </property>
+                       <property name="placeholderText">
+                        <string>GDB Multiarch additional command. Eg: set architecture aarch64</string>
+                       </property>
+                       <property name="clearButtonEnabled">
+                        <bool>true</bool>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QToolButton" name="executableOpenOCDButton_3">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="minimumSize">
+                        <size>
+                         <width>24</width>
+                         <height>23</height>
+                        </size>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>24</width>
+                         <height>23</height>
+                        </size>
+                       </property>
+                       <property name="toolTip">
+                        <string>Open a dialog to select an executable.</string>
+                       </property>
+                       <property name="text">
+                        <string/>
+                       </property>
+                       <property name="icon">
+                        <iconset resource="resource.qrc">
+                         <normaloff>:/seer/resources/RelaxLightIcons/document-open.svg</normaloff>:/seer/resources/RelaxLightIcons/document-open.svg</iconset>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
                    </item>
                   </layout>
                  </widget>
@@ -1384,6 +1357,9 @@
                  <layout class="QHBoxLayout" name="horizontalLayout_22">
                   <item>
                    <widget class="QCheckBox" name="dockerCheckBox">
+                    <property name="toolTip">
+                     <string>Check if your image is built in docker</string>
+                    </property>
                     <property name="text">
                      <string>Build in docker</string>
                     </property>
@@ -1397,39 +1373,10 @@
                     <property name="sizeHint" stdset="0">
                      <size>
                       <width>898</width>
-                      <height>20</height>
+                      <height>33</height>
                      </size>
                     </property>
                    </spacer>
-                  </item>
-                  <item>
-                   <widget class="QPushButton" name="openocdDockeHelpButton">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>24</width>
-                      <height>23</height>
-                     </size>
-                    </property>
-                    <property name="maximumSize">
-                     <size>
-                      <width>24</width>
-                      <height>23</height>
-                     </size>
-                    </property>
-                    <property name="text">
-                     <string/>
-                    </property>
-                    <property name="icon">
-                     <iconset resource="resource.qrc">
-                      <normaloff>:/seer/resources/RelaxLightIcons/help-about.svg</normaloff>:/seer/resources/RelaxLightIcons/help-about.svg</iconset>
-                    </property>
-                   </widget>
                   </item>
                  </layout>
                 </item>
@@ -1438,36 +1385,52 @@
                   <property name="title">
                    <string>Absolute path to build folder on host system         </string>
                   </property>
-                  <layout class="QHBoxLayout" name="horizontalLayout_18">
-                   <item>
-                    <widget class="QLineEdit" name="absolutePathLineEdit">
-                     <property name="toolTip">
-                      <string/>
-                     </property>
-                     <property name="statusTip">
-                      <string/>
-                     </property>
-                     <property name="whatsThis">
-                      <string/>
-                     </property>
-                     <property name="accessibleName">
-                      <string/>
-                     </property>
-                     <property name="placeholderText">
-                      <string>Specify absolute path to build folder. Eg: $USER/Documents/Github/buildBeagleBone</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QPushButton" name="absolutePathButton">
-                     <property name="text">
-                      <string/>
-                     </property>
-                     <property name="icon">
-                      <iconset resource="resource.qrc">
-                       <normaloff>:/seer/resources/RelaxLightIcons/document-open.svg</normaloff>:/seer/resources/RelaxLightIcons/document-open.svg</iconset>
-                     </property>
-                    </widget>
+                  <layout class="QGridLayout" name="gridLayout_17">
+                   <item row="0" column="0">
+                    <layout class="QHBoxLayout" name="horizontalLayout_18">
+                     <item>
+                      <widget class="QLineEdit" name="absolutePathLineEdit">
+                       <property name="toolTip">
+                        <string/>
+                       </property>
+                       <property name="statusTip">
+                        <string/>
+                       </property>
+                       <property name="whatsThis">
+                        <string/>
+                       </property>
+                       <property name="accessibleName">
+                        <string/>
+                       </property>
+                       <property name="placeholderText">
+                        <string>Specify absolute path to build folder. Eg: $USER/Documents/Github/buildBeagleBone</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="absolutePathButton">
+                       <property name="minimumSize">
+                        <size>
+                         <width>24</width>
+                         <height>23</height>
+                        </size>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>24</width>
+                         <height>23</height>
+                        </size>
+                       </property>
+                       <property name="text">
+                        <string/>
+                       </property>
+                       <property name="icon">
+                        <iconset resource="resource.qrc">
+                         <normaloff>:/seer/resources/RelaxLightIcons/document-open.svg</normaloff>:/seer/resources/RelaxLightIcons/document-open.svg</iconset>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
                    </item>
                   </layout>
                  </widget>
@@ -1525,24 +1488,10 @@
                     <property name="sizeHint" stdset="0">
                      <size>
                       <width>1041</width>
-                      <height>20</height>
+                      <height>33</height>
                      </size>
                     </property>
                    </spacer>
-                  </item>
-                  <item>
-                   <widget class="QToolButton" name="openOCDKernelHelpButton">
-                    <property name="toolTip">
-                     <string>Help for Corefile launch method.</string>
-                    </property>
-                    <property name="text">
-                     <string>...</string>
-                    </property>
-                    <property name="icon">
-                     <iconset resource="resource.qrc">
-                      <normaloff>:/seer/resources/RelaxLightIcons/help-about.svg</normaloff>:/seer/resources/RelaxLightIcons/help-about.svg</iconset>
-                    </property>
-                   </widget>
                   </item>
                  </layout>
                 </item>
@@ -1705,6 +1654,64 @@
      </layout>
     </widget>
    </item>
+   <item row="0" column="0">
+    <widget class="QGroupBox" name="executableNameGroupBox">
+     <property name="title">
+      <string>Executable Name</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+     </property>
+     <property name="flat">
+      <bool>false</bool>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <item>
+         <widget class="QLineEdit" name="executableNameLineEdit">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="toolTip">
+           <string>The path and name of an executable to debug.</string>
+          </property>
+          <property name="placeholderText">
+           <string>The path and name of an executable to debug.</string>
+          </property>
+          <property name="clearButtonEnabled">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QToolButton" name="executableNameToolButton">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="toolTip">
+           <string>Open a dialog to select an executable.</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="resource.qrc">
+            <normaloff>:/seer/resources/RelaxLightIcons/document-open.svg</normaloff>:/seer/resources/RelaxLightIcons/document-open.svg</iconset>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
    <item row="1" column="0">
     <widget class="QGroupBox" name="executableSymbolNameGroupBox">
      <property name="title">
@@ -1748,6 +1755,52 @@
           </property>
           <property name="toolTip">
            <string>Open a dialog to select the symbol file for the executable.</string>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="resource.qrc">
+            <normaloff>:/seer/resources/RelaxLightIcons/document-open.svg</normaloff>:/seer/resources/RelaxLightIcons/document-open.svg</iconset>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QGroupBox" name="executableWorkingDirectoryGroupBox">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="title">
+      <string>Working Directory</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_3">
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_5">
+        <item>
+         <widget class="QLineEdit" name="executableWorkingDirectoryLineEdit">
+          <property name="toolTip">
+           <string>The working directory path to tell GDB. Default current directory.</string>
+          </property>
+          <property name="placeholderText">
+           <string>The working directory path to tell GDB. Default current directory.</string>
+          </property>
+          <property name="clearButtonEnabled">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QToolButton" name="executableWorkingDirectoryToolButton">
+          <property name="toolTip">
+           <string>Open a dialog to select a path.</string>
           </property>
           <property name="text">
            <string/>

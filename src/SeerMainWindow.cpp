@@ -654,6 +654,7 @@ void SeerMainWindow::handleFileDebug () {
     setOpenOCDCommand(dlg.openOCDCommand());
     setGdbMultiarchExePath(dlg.gdbMultiarchExePath());
     setGdbPort(dlg.gdbPort());
+    setTelnetPort(dlg.telnetPort());
     setGdbMultiarchCommand(dlg.gdbMultiarchCommand());
     setBuiltInDocker(dlg.isBuiltInDocker());
     setAbsoluteBuildFolderPath(dlg.absoluteBuildFolderPath());
@@ -1552,6 +1553,7 @@ void SeerMainWindow::handleHelpToolButtonClicked () {
 
     SeerHelpPageDialog* help = new SeerHelpPageDialog;
     help->loadFile(":/seer/resources/help/MainWindow.md");
+    help->setWindowFlags(help->windowFlags() | Qt::WindowStaysOnTopHint);
     help->show();
     help->raise();
 }
@@ -1912,6 +1914,14 @@ const QString& SeerMainWindow::gdbPort() {
 
 void SeerMainWindow::setGdbPort (const QString& port){
     gdbWidget->setGdbPort(port);
+}
+
+const QString& SeerMainWindow::telnetPort() {
+    return gdbWidget->telnetPort();
+}
+
+void SeerMainWindow::setTelnetPort (const QString& port){
+    gdbWidget->setTelnetPort(port);
 }
 
 const QString& SeerMainWindow::gdbMultiarchCommand () {

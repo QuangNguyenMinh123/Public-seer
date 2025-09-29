@@ -230,6 +230,8 @@ class SeerGdbWidget : public QWidget, protected Ui::SeerGdbWidgetForm {
         void                                setGdbMultiarchExePath              (const QString& path);
         const QString&                      gdbPort                             ();
         void                                setGdbPort                          (const QString& port);
+        const QString&                      telnetPort                          ();
+        void                                setTelnetPort                       (const QString& port);
         const QString&                      gdbMultiarchCommand                 ();
         void                                setGdbMultiarchCommand              (const QString& command);
         // ::Docker
@@ -556,6 +558,7 @@ class SeerGdbWidget : public QWidget, protected Ui::SeerGdbWidgetForm {
         // GDB Multiarch
         QString                             _gdbMultiarchExePath;
         QString                             _GDBPort;
+        QString                             _TelnetPort;
         QString                             _gdbMultiarchCommands;
         QString                             _gdbMultiarchProgram;
         QString                             _gdbMultiarchArguments;

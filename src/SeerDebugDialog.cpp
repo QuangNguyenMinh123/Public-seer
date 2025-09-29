@@ -89,6 +89,7 @@ SeerDebugDialog::SeerDebugDialog (QWidget* parent) : QDialog(parent) {
     QObject::connect(openOCDKernelKernelDirPathButton,     &QToolButton::clicked,               this, &SeerDebugDialog::handleOpenOCDKernelDirPathButton);
     QObject::connect(dockerCheckBox,                       &QCheckBox::clicked,                 this, &SeerDebugDialog::handleOpenOCDDockerCheckbox);
     QObject::connect(absolutePathButton,                   &QToolButton::clicked,               this, &SeerDebugDialog::handleOpenOCDBuildFolderPathButton);
+    QObject::connect(openOCDMainHelpButton,                &QToolButton::clicked,               this, &SeerDebugDialog::handleOpenOCDMainHelpButtonClicked);
     // Set initial run mode.
     handleRunModeChanged(0);
 
@@ -688,13 +689,13 @@ void SeerDebugDialog::loadProject (const QString& filename, bool notify) {
         openOCDCommandLineEdit                  ->setPlainText(openocdModeJson["openocdCommand"].toString());
         openOcdGdbMultiarchLineEdit             ->setText(openocdModeJson["gdbMultiarchExe"].toString());
         openOCD_GDB_Port_LineEdit               ->setText(openocdModeJson["gdbPort"].toString());
+        openOCD_Telnet_Port_LineEdit            ->setText(openocdModeJson["telnetPort"].toString());
         openOCDGdbCommandLineEdit               ->setText(openocdModeJson["gdbMultiarchCommand"].toString());
         dockerCheckBox                          ->setChecked(openocdModeJson["dockerCheckBox"].toBool());
         absolutePathLineEdit                    ->setText(openocdModeJson["absolutePathLineEdit"].toString());
         dockerPathLineEdit                      ->setText(openocdModeJson["dockerPathLineEdit"].toString());
         openOCDKernelKernelSymbolLineEdit       ->setText(openocdModeJson["kernelSymbolPath"].toString());
         openOCDKernelKernelDirLineEdit          ->setText(openocdModeJson["kernelCodePath"].toString());
-        openOCD_GDB_Port_LineEdit               ->setText(openocdModeJson["kernelModuleCodePath"].toString());
 
         setLaunchMode("openocd");
     }
@@ -825,13 +826,13 @@ void SeerDebugDialog::handleSaveProjectToolButton () {
         modeJson["openocdCommand"]          = openOCDCommandLineEdit->toPlainText();
         modeJson["gdbMultiarchExe"]         = openOcdGdbMultiarchLineEdit->text();
         modeJson["gdbPort"]                 = openOCD_GDB_Port_LineEdit->text();
+        modeJson["telnetPort"]              = openOCD_Telnet_Port_LineEdit->text();
         modeJson["gdbMultiarchCommand"]     = openOCDGdbCommandLineEdit->text();
         modeJson["dockerCheckBox"]          = dockerCheckBox->isChecked();
         modeJson["absolutePathLineEdit"]    = absolutePathLineEdit->text();
         modeJson["dockerPathLineEdit"]      = dockerPathLineEdit->text();
         modeJson["kernelSymbolPath"]        = openOCDKernelKernelSymbolLineEdit->text();
         modeJson["kernelCodePath"]          = openOCDKernelKernelDirLineEdit->text();
-        modeJson["kernelModuleCodePath"]    = openOCD_GDB_Port_LineEdit->text();
 
         seerProjectJson["openocdmode"] = modeJson;
     }
@@ -953,6 +954,7 @@ void SeerDebugDialog::handleHelpModeToolButtonClicked () {
 
     SeerHelpPageDialog* help = new SeerHelpPageDialog(this);
     help->loadFile(":/seer/resources/help/DebugModes.md");
+    help->setWindowFlags(help->windowFlags() | Qt::WindowStaysOnTopHint);
     help->show();
     help->raise();
 }
@@ -961,6 +963,7 @@ void SeerDebugDialog::handleHelpRunToolButtonClicked () {
 
     SeerHelpPageDialog* help = new SeerHelpPageDialog(this);
     help->loadFile(":/seer/resources/help/RunDebugMode.md");
+    help->setWindowFlags(help->windowFlags() | Qt::WindowStaysOnTopHint);
     help->show();
     help->raise();
 }
@@ -969,6 +972,7 @@ void SeerDebugDialog::handleHelpAttachToolButtonClicked () {
 
     SeerHelpPageDialog* help = new SeerHelpPageDialog(this);
     help->loadFile(":/seer/resources/help/AttachDebugMode.md");
+    help->setWindowFlags(help->windowFlags() | Qt::WindowStaysOnTopHint);
     help->show();
     help->raise();
 }
@@ -977,6 +981,7 @@ void SeerDebugDialog::handleHelpConnectToolButtonClicked () {
 
     SeerHelpPageDialog* help = new SeerHelpPageDialog(this);
     help->loadFile(":/seer/resources/help/ConnectDebugMode.md");
+    help->setWindowFlags(help->windowFlags() | Qt::WindowStaysOnTopHint);
     help->show();
     help->raise();
 }
@@ -985,6 +990,7 @@ void SeerDebugDialog::handleHelpRRToolButtonClicked () {
 
     SeerHelpPageDialog* help = new SeerHelpPageDialog(this);
     help->loadFile(":/seer/resources/help/RRDebugMode.md");
+    help->setWindowFlags(help->windowFlags() | Qt::WindowStaysOnTopHint);
     help->show();
     help->raise();
 }
@@ -993,6 +999,7 @@ void SeerDebugDialog::handleHelpCorefileToolButtonClicked () {
 
     SeerHelpPageDialog* help = new SeerHelpPageDialog(this);
     help->loadFile(":/seer/resources/help/CorefileDebugMode.md");
+    help->setWindowFlags(help->windowFlags() | Qt::WindowStaysOnTopHint);
     help->show();
     help->raise();
 }
@@ -1040,6 +1047,14 @@ const QString SeerDebugDialog::gdbPort() {
 
 void SeerDebugDialog::setGdbPort (const QString& port){
     openOCD_GDB_Port_LineEdit->setText(port);
+}
+
+const QString SeerDebugDialog::telnetPort() {
+    return openOCD_Telnet_Port_LineEdit->text();
+}
+
+void SeerDebugDialog::setTelnetPort (const QString& port){
+    openOCD_Telnet_Port_LineEdit->setText(port);
 }
 
 const QString SeerDebugDialog::openOCDCommand() {
@@ -1122,9 +1137,11 @@ void SeerDebugDialog::handleOpenOCDDefaultButtonClicked() {
     QString defaultOpenOCDPath = "/usr/local/bin/openocd";
     QString defaultGdbMultiarch = "/usr/bin/gdb-multiarch";
     QString defaultGDBPort = "3333";
+    QString defaultTelnetPort = "4444";
     executableOpenOCDPathLineEdit->setText(defaultOpenOCDPath);
     openOcdGdbMultiarchLineEdit->setText(defaultGdbMultiarch);
     openOCD_GDB_Port_LineEdit->setText(defaultGDBPort);
+    openOCD_Telnet_Port_LineEdit->setText(defaultTelnetPort);
 }
 // When OpenOCD Tab changed
 void SeerDebugDialog::handleOpenOCDTabChanged(int id)
@@ -1188,4 +1205,13 @@ void SeerDebugDialog::handleOpenOCDBuildFolderPathButton () {
     if (name != "") {
         setAbsoluteBuildFolderPath(name);
     }
+}
+
+void SeerDebugDialog::handleOpenOCDMainHelpButtonClicked()
+{
+    SeerHelpPageDialog* help = new SeerHelpPageDialog;
+    help->loadFile(":/seer/resources/help/OpenOCDHelp.md");
+    help->setWindowFlags(help->windowFlags() | Qt::WindowStaysOnTopHint);
+    help->show();
+    help->raise();
 }
