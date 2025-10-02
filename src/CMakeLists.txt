@@ -1,8 +1,8 @@
-cmake_minimum_required(VERSION 3.21.0)          # QuangNM13 QT v6.6
+cmake_minimum_required(VERSION 3.21.0)
 
 project(seergdb VERSION 2.6.0 LANGUAGES CXX)
-set(QT_VERSION_MAJOR 6)                         # QuangNM13 QT v6.6
-set(QT_REQUIRED_VERSION 6.6)                    # QuangNM13 QT v6.6
+set(QT_VERSION_MAJOR 6)
+set(QT_REQUIRED_VERSION 6.6)
 
 set(PROJECT_NAME seergdb)
 

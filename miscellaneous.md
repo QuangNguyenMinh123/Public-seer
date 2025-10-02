@@ -10,25 +10,27 @@
 5. display source code debug on Stm32                                                           ✓
 6. on Breakpoints/Watchpoints Tab ..., Can i remove some col, like number, adress, ...?
 7. Can i add dock feature to every tab?
-8. Add OpenOCD -> add insmode kernel module.
-9. Add help, readme     (minimum priority)
+8. Add OpenOCD -> add insmode kernel module.                                                    ✓
+9. Add help, readme     (minimum priority)                                                      ✓
 10. Add feature: disable actionControlNext, actionControlStep,actionControlFinish               ✓
     while target is running and enable them when target is halted (this can fix some bug)
-11. check: test stepi and nexti on openocd
+11. check: test stepi and nexti on openocd (need to fix segment fault on assembly)
 12. Add multiple backtrace pointer color (like vscode) (already deployed)                       ✗
-13. Debug kernel (HIGH PRIORITY)                                                                ... seem unstable
-14. Debug kernel module (HIGH PRIORITY)
+13. Debug kernel (HIGH PRIORITY)                                                                ✓
+14. Debug kernel module on init (HIGH PRIORITY)                                                 ✓
 15. Add status indicator, display status: running, stopped, stop at breakpoint, disconnected,
     running core. (enhance SeerRunStatusIndicatorBox)                                           ... (disconnected will be fixed along with openocd)
 16. add docker config path                                                                      ✓
-17. Can I track code when press ctrl + left click?
+17. Can I track code when press ctrl + left click? (SeerEditorWidgetSourceArea)
+    on T32, when i singlely click on  a function/var, it instantly show its value. Can i do that on seer
 18. Can I go back to previous tab like vscode?
 19. On Source info: search regex...: can I input kernel/module/main.c and seer look that for me?
 20. Check file availability before run debug on init, load kernel, kernel module ...
 21. When bp is disabled, enabled, will its status be displayed accordingly?
             (yes, it works on desktop app but not with openocd)                                 ✓
 22. Why don't we add macro to enable/disable debug on cmakelist?                                ✓ enable on cmake
-23. Add reset target for openocd
+23. Add reset target button for openocd
+24. KGDB?
 # Bug:
 - Insert, remove breakpoint during running for openocd (HIGH PRIORITY)                                              ✓
 - Breakpoints don't show up in "Breakpoints" Tab for openocd                                                        ✓
@@ -80,7 +82,9 @@ openocd -f /home/quangnm/Documents/GitHub/seer/openocd/tcl/interface/jlink.cfg -
 -stack-list-frames                                                                              : backtrace
 -file-exec-and-symbols (file)                                                                   : equal to gdb `file` command
 -target-select extended-remote :3333                                                            : equal to gdb `target extended-remote :3333` command
-
+-symbol-info-functions --name start_kernel                                                      : find location of function start_kernel
+-symbol-info-variables -- name                                                                  : find location of global .variable
+-symbol-info-types --name
 # Prefix expplain
 | Prefix | Type                  | Description                                                                 | Example |
 |--------|-----------------------|-----------------------------------------------------------------------------|---------|

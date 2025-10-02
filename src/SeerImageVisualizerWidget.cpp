@@ -253,7 +253,7 @@ void SeerImageVisualizerWidget::handleText (const QString& text) {
         // Ignore anything else.
     }
 
-    QApplication::restoreOverrideCursor();
+    QApplication::setOverrideCursor(Qt::ArrowCursor);
 }
 
 void SeerImageVisualizerWidget::handleRefreshButton () {

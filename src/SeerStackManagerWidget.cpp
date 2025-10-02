@@ -216,7 +216,7 @@ void SeerStackManagerWidget::handleText (const QString& text) {
         // Ignore others.
     }
 
-    QApplication::restoreOverrideCursor();
+    QApplication::setOverrideCursor(Qt::ArrowCursor);
 }
 
 void SeerStackManagerWidget::handleSessionTerminated () {

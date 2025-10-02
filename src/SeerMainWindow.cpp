@@ -211,6 +211,8 @@ SeerMainWindow::SeerMainWindow(QWidget* parent) : QMainWindow(parent) {
     // Openocd signal and slots
     // This handle when actionOpenOCDDebugModule is clicked
     QObject::connect(actionOpenOCDDebugModule,          &QAction::triggered,                            gdbWidget,      &SeerGdbWidget::handleDebugKernelModule);
+    QObject::connect(actionOpenOCDHelp,                 &QAction::triggered,                            gdbWidget,      &SeerGdbWidget::handleOpenOCDMainHelpButtonClicked);
+
     // Handle Debug on Init, avoid thread disruption
     QObject::connect(gdbWidget,                         &SeerGdbWidget::requestContinue,                gdbWidget,      &SeerGdbWidget::handleGdbContinue);
     QObject::connect(gdbWidget,                         &SeerGdbWidget::requestBreakList,               gdbWidget,      &SeerGdbWidget::handleGdbGenericpointList);
@@ -239,6 +241,7 @@ SeerMainWindow::SeerMainWindow(QWidget* parent) : QMainWindow(parent) {
 }
 
 SeerMainWindow::~SeerMainWindow() {
+    handleTerminateExecutable();                    // QuangNM13: see if this could fix segmantation fault on exit.
 }
 
 void SeerMainWindow::setExecutableName (const QString& executableName) {
@@ -881,7 +884,7 @@ void SeerMainWindow::handleTerminateExecutable () {
     gdbWidget->gdbMonitor()->setBuiltInDocker(false);
     gdbWidget->setExecutableLaunchMode("");
     handleGdbStateChanged();
-    QApplication::restoreOverrideCursor();
+    QApplication::setOverrideCursor(Qt::ArrowCursor);
     _runStatus->handleTerminate();
     menuOpenOCD->menuAction()->setVisible(false);
     actionOpenOCDAttach->setVisible(false);

@@ -1031,8 +1031,8 @@ void SeerDebugDialog::resizeEvent (QResizeEvent* event) {
 }
 
 /***********************************************************************************************************************
- * OpenOCD getter and setter from LineEdit                                                                      *
-***********************************************************************************************************************/
+ * OpenOCD getter and setter from LineEdit                                                                             *
+ **********************************************************************************************************************/
 const QString SeerDebugDialog::openOCDExePath() {
     return executableOpenOCDPathLineEdit->text();
 }
@@ -1131,7 +1131,7 @@ void SeerDebugDialog::setKernelCodePath (const QString& path){
 }
 /***********************************************************************************************************************
  * OpenOCD Slots                                                                                                       *
-***********************************************************************************************************************/
+ **********************************************************************************************************************/
 // Do this when OpenOCD Tab -> Main -> Default Button clicked
 void SeerDebugDialog::handleOpenOCDDefaultButtonClicked() {
     QString defaultOpenOCDPath = "/usr/local/bin/openocd";
@@ -1212,6 +1212,5 @@ void SeerDebugDialog::handleOpenOCDMainHelpButtonClicked()
     SeerHelpPageDialog* help = new SeerHelpPageDialog;
     help->loadFile(":/seer/resources/help/OpenOCDHelp.md");
     help->setWindowFlags(help->windowFlags() | Qt::WindowStaysOnTopHint);
-    help->show();
-    help->raise();
+    help->exec();
 }

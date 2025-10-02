@@ -149,7 +149,7 @@ void SeerStructVisualizerWidget::handleText (const QString& text) {
     variableTreeWidget->resizeColumnToContents(1);
 
     // Set the cursor back.
-    QApplication::restoreOverrideCursor();
+    QApplication::setOverrideCursor(Qt::ArrowCursor);
 }
 
 void SeerStructVisualizerWidget::handleItemCreate (QTreeWidgetItem* parentItem, const QString& value_text) {

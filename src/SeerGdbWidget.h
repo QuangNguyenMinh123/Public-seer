@@ -247,11 +247,7 @@ class SeerGdbWidget : public QWidget, protected Ui::SeerGdbWidgetForm {
         void                                setKernelSymbolPath                 (const QString& path);
         const QString&                      kernelCodePath                      ();
         void                                setKernelCodePath                   (const QString& path);
-        // ::Kernel Module
-        // const QString&                      kernelSymbolPath                    () const;
-        // void                                setKernelSymbolPath                 (const QString& executable);
-        // const QString&                      kernelCodePath                      () const;
-        // void                                setKernelCodePath                   (const QString& executable);
+
         void                                setGdbMultiarchPid                  (int pid);
         void                                setNewHardwareBreakpointFlag        (bool flag);
         bool                                isNewHardwareBreakpointFlag         ();
@@ -261,7 +257,8 @@ class SeerGdbWidget : public QWidget, protected Ui::SeerGdbWidgetForm {
         bool                                gdbMultiarchRunningState            ();
         QProcess*                           openocdProcess                      ();
         // handle multithread, for openocd debug on init feature
-        void                                handleMultiThread                   ();
+        void                                debugOnInitHandler                  ();
+        void                                traceIdentifierHandler              (const QString& identifier);
         // Sync function, only for debug on init
         void                                handleSyncGdbInterruptSIGINT        ();
         void                                handleSyncGdbGenericpointList       ();
@@ -269,7 +266,7 @@ class SeerGdbWidget : public QWidget, protected Ui::SeerGdbWidgetForm {
         void                                handleSyncBreakInsert               (QString bp);
         void                                handleSyncBreakEnable               (QString bp);
         void                                handleSyncBreakDisable              (QString bp);
-        void                                handleSyncManualGdbCommand                (QString expression);
+        void                                handleSyncManualGdbCommand          (QString expression);
         void                                handleSyncSetConnection             (QString status);
         void                                handleSyncSendToSerial              (QString path, QString expression);
         void                                handleSyncRefreshSource             ();
@@ -293,6 +290,7 @@ class SeerGdbWidget : public QWidget, protected Ui::SeerGdbWidgetForm {
         void                                handleGdbCoreFileExecutable         ();
         // openocd gdb-multiarch support
         void                                handleGdbMultiarchOpenOCDExecutable ();
+        void                                handleOpenOCDMainHelpButtonClicked  ();
         void                                handleDebugKernelModule             ();
         void                                handleGdbTerminateExecutable        (bool confirm=true);
         void                                handleGdbShutdown                   ();
@@ -440,7 +438,9 @@ class SeerGdbWidget : public QWidget, protected Ui::SeerGdbWidgetForm {
         void                                handleConsoleNewTextViewed          ();
         void                                handleAboutToQuit                   ();
         void                                handleOpenOCDStartFailed            ();
-        
+
+        // For handling tracing functions, variables and types
+        void                                handleSeekIdentifier                (const QString& identifier);
 
     signals:
         void                                stoppingPointReached                ();
@@ -607,6 +607,4 @@ class SeerGdbWidget : public QWidget, protected Ui::SeerGdbWidgetForm {
         QMap<QString,QString>               _mapListBpStatus;
         // List of kernel module address
         QMap<QString, QString>              _mapKernelModuleAddress;
-        // Adress of __init function
-        QString                             _initFuncAddress;
 };

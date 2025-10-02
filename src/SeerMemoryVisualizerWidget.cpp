@@ -300,7 +300,7 @@ void SeerMemoryVisualizerWidget::handleText (const QString& text) {
         // Ignore anything else.
     }
 
-    QApplication::restoreOverrideCursor();
+    QApplication::setOverrideCursor(Qt::ArrowCursor);
 }
 
 void SeerMemoryVisualizerWidget::handleRefreshButton () {

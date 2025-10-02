@@ -94,7 +94,7 @@ void GdbMonitor::handleReadyReadStandardOutput () {
 #endif
 
         // If symbol is built in docker, then _dockerBuildPath shall be replace by _absoluteBuildPath
-        if (isBuiltInDocker())
+        if (isBuiltInDocker())          // quangnm13: bug here
             text.replace(dockerBuildFolderPath(), absoluteBuildFolderPath());
         if (text[0] == '~') {
             emit tildeTextOutput(text);
