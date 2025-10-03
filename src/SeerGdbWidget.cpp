@@ -4768,11 +4768,11 @@ void SeerGdbWidget::handleDebugKernelModule()
     _kernelModuleSourceCodePath = dlg.kernelModuleSourceCodePath();
     _serialPortPath             = dlg.serialPortPath();
     
-    if ( isFileExistNotify(_kernelModuleSymbolPath) == false)
+    if ( Seer::isFileExistNotify(_kernelModuleSymbolPath) == false)
         return;
-    if ( isDirExistNotify(_kernelModuleSourceCodePath) == false)
+    if ( Seer::isDirExistNotify(_kernelModuleSourceCodePath) == false)
         return;
-    if ( isFileExistNotify(_serialPortPath) == false)
+    if ( Seer::isFileExistNotify(_serialPortPath) == false)
         return;
     if (_moduleName == "" || _commandToTerm == "")
     {
