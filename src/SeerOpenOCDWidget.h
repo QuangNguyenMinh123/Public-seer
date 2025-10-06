@@ -18,6 +18,10 @@ class SeerOpenOCDWidget: public SeerLogWidget{
         bool startOpenOCD                   (const QString &openocdExe, const QString &command);
         void killOpenOCD                    ();
         bool isOpenocdRunning               ();
+        // Start & kill Telnet process
+        bool startTelnet                    (const QString &port);
+        void killTelnet                     ();
+        bool isTelnetRunning                ();
         // Create & kill Console displaying OpenOCD process logs
         void createOpenOCDConsole           (QDetachTabWidget* parent);
         void killConsole                    ();
@@ -25,8 +29,8 @@ class SeerOpenOCDWidget: public SeerLogWidget{
         // Getters & Setters
         SeerLogWidget* openocdConsole              ();
         SeerOpenOCDWidget* getOpenOCDWidget ();
-        SeerOpenOCDWidget* setOpenOCDWidget (SeerOpenOCDWidget* widget);
         QProcess* openocdProcess();
+        QProcess* telnetProcess();
         
     signals:
         void openocdDisconnect              ();
@@ -38,6 +42,6 @@ class SeerOpenOCDWidget: public SeerLogWidget{
 
     private:
         QProcess*                           _openocdProcess;
-        QString                             _openocdArguments;
+        QProcess*                           _telnetProcess;
         SeerLogWidget*                      _openocdlogsTabWidget;
 };

@@ -93,6 +93,14 @@ class SeerDebugDialog : public QDialog, protected Ui::SeerDebugDialogForm {
         void                                setGdbMultiarchExePath              (const QString& path);
         const QString                       gdbMultiarchCommand                 ();
         void                                setGdbMultiarchCommand              (const QString& command);
+        bool                                isGdbMultiarchIsStopAtTempFunc      ();
+        void                                setGdbMultiarchStopAtTempFunc       (bool check);
+        const QString                       gdbMultiarchStopAtFunc              ();
+        void                                setGdbMultiarchStopAtFunc           (const QString& func);
+        bool                                isGdbMultiarchStopAtException       ();
+        void                                setGdbMultiarchStopAtExeption       (bool check);
+        const QString                       gdbMultiarchExeptionLevelToStop     ();
+        void                                setGdbMultiarchExeptionLevelToStop  (const QString& level);
         // ::Docker
         bool                                isBuiltInDocker                     ();
         void                                setBuiltInDocker                    (bool check);
@@ -134,8 +142,10 @@ class SeerDebugDialog : public QDialog, protected Ui::SeerDebugDialogForm {
         void                    handleHelpConnectToolButtonClicked              ();
         void                    handleHelpRRToolButtonClicked                   ();
         void                    handleHelpCorefileToolButtonClicked             ();
-        void                    handleOpenOCDDockerCheckbox                     ();
+        void                    handleOpenOCDDockerCheckboxClicked              ();
         void                    handleOpenOCDMainHelpButtonClicked              ();
+        void                    handleOpenOCDTempFuncCheckBoxClicked            ();
+        void                    handleOpenOCDStopExceptionLebelCheckBoxClicked  ();
 
     protected:
         void                    writeSettings                                   ();

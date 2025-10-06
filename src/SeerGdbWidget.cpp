@@ -4515,6 +4515,38 @@ void SeerGdbWidget::setGdbMultiarchCommand (const QString& command) {
     _gdbMultiarchCommands = command;
 }
 
+bool SeerGdbWidget::isGdbMultiarchIsStopAtTempFunc () {
+    return _isStopAtTempFunc;
+}
+
+void SeerGdbWidget::setGdbMultiarchStopAtTempFunc (bool check) {
+    _isStopAtTempFunc = check;
+}
+
+const QString SeerGdbWidget::gdbMultiarchStopAtFunc () {
+    return _stopAtFunc;
+}
+
+void SeerGdbWidget::setGdbMultiarchStopAtFunc (const QString& func) {
+    _stopAtFunc = func;
+}
+
+bool SeerGdbWidget::isGdbMultiarchStopAtException() {
+    return _isStopAtException;
+}
+
+void SeerGdbWidget::setGdbMultiarchStopAtExeption (bool check) {
+    _isStopAtException = check;
+}
+
+const QString SeerGdbWidget::gdbMultiarchExeptionLevelToStop () {
+    return _exceptionLevelToStop;
+}
+
+void SeerGdbWidget::setGdbMultiarchExeptionLevelToStop (const QString& level) {
+    _exceptionLevelToStop = level;
+}
+
 // :: Docker
 bool SeerGdbWidget::isBuiltInDocker()
 {
@@ -4628,6 +4660,13 @@ void SeerGdbWidget::handleGdbMultiarchOpenOCDExecutable()
                                    QMessageBox::Ok);
         return;
     }
+    foo = openocdWidget->startTelnet(telnetPort());
+    if (foo == false) {
+        QMessageBox::warning(this, "Seer",
+                                   QString("Unable to launch the Telnet.\n") + QString("Please check your Telnet."),
+                                   QMessageBox::Ok);
+        return;
+    }
     // Now, set _gdbProgram as gdb-multiarch, provided by openocd launch mode
     setGdbProgram(gdbMultiarchExePath());
     setGdbMultiarchRunningState(true);          // always assume that target is running
@@ -4687,6 +4726,13 @@ void SeerGdbWidget::handleGdbMultiarchOpenOCDExecutable()
             }
         }
         setGdbRemoteTargetType("extended-remote");
+
+        // If symbol is built in docker, then _dockerBuildPath shall be replace by _absoluteBuildPath
+        if (isBuiltInDocker())
+        {
+            QString manualCommand = "set substitute-path " + dockerBuildFolderPath() + " " + absoluteBuildFolderPath();
+            handleGdbCommand(manualCommand);
+        }
         
         // Handle additional gdb-multiarch command
         handleGdbCommand(QString("%1").arg(gdbMultiarchCommand()));

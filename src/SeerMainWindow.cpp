@@ -664,6 +664,10 @@ void SeerMainWindow::handleFileDebug () {
     setDockerBuildFolderPath(dlg.dockerBuildFolderPath());
     setKernelSymbolPath(dlg.kernelSymbolPath());
     setKernelCodePath(dlg.kernelCodePath());
+    setGdbMultiarchStopAtTempFunc(dlg.isGdbMultiarchIsStopAtTempFunc());
+    setGdbMultiarchStopAtFunc(dlg.gdbMultiarchStopAtFunc());
+    setGdbMultiarchStopAtExeption(dlg.isGdbMultiarchStopAtException());
+    setGdbMultiarchExeptionLevelToStop(dlg.gdbMultiarchExeptionLevelToStop());
     gdbWidget->setGdbMultiarchPid(0);           // clear current gdb-multiarch pid
 
     launchExecutable(launchMode, breakMode);
@@ -1933,6 +1937,38 @@ const QString& SeerMainWindow::gdbMultiarchCommand () {
 
 void SeerMainWindow::setGdbMultiarchCommand (const QString& command) {
     gdbWidget->setGdbMultiarchCommand(command);
+}
+
+bool SeerMainWindow::isGdbMultiarchIsStopAtTempFunc () {
+    return gdbWidget->isGdbMultiarchIsStopAtTempFunc();
+}
+
+void SeerMainWindow::setGdbMultiarchStopAtTempFunc (bool check) {
+    gdbWidget->setGdbMultiarchStopAtTempFunc(check);
+}
+
+const QString SeerMainWindow::gdbMultiarchStopAtFunc () {
+    return gdbWidget->gdbMultiarchStopAtFunc();
+}
+
+void SeerMainWindow::setGdbMultiarchStopAtFunc (const QString& func) {
+    gdbWidget->setGdbMultiarchStopAtFunc(func);
+}
+
+bool SeerMainWindow::isGdbMultiarchStopAtException () {
+    return gdbWidget->isGdbMultiarchStopAtException();
+}
+
+void SeerMainWindow::setGdbMultiarchStopAtExeption (bool check) {
+    gdbWidget->setGdbMultiarchStopAtExeption(check);
+}
+
+const QString SeerMainWindow::gdbMultiarchExeptionLevelToStop() {
+    return gdbWidget->gdbMultiarchExeptionLevelToStop();
+}
+
+void SeerMainWindow::setGdbMultiarchExeptionLevelToStop (const QString& level) {
+    gdbWidget->setGdbMultiarchExeptionLevelToStop(level);
 }
 
 /// ::Docker

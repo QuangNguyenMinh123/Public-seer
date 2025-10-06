@@ -163,6 +163,7 @@ void SeerSourceBrowserWidget::handleSessionTerminated () {
 
     // Delete previous files.
     deleteChildItems();
+    _files.clear();
 }
 
 void SeerSourceBrowserWidget::handleItemDoubleClicked (QTreeWidgetItem* item, int column) {

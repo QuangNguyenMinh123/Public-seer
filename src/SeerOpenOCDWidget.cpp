@@ -8,18 +8,20 @@
 SeerOpenOCDWidget::SeerOpenOCDWidget (QWidget* parent) {
     Q_UNUSED(parent);
     _openocdProcess = new QProcess(this);
-    _openocdArguments = "";
+    _telnetProcess = new QProcess(this);
     _openocdlogsTabWidget = nullptr;
 }
 
 SeerOpenOCDWidget::~SeerOpenOCDWidget (){
     killOpenOCD();
+    killTelnet();
 }
 
 void SeerOpenOCDWidget::newOpenOCDWidget (){
     if (!_openocdProcess)
         _openocdProcess = new QProcess(this);
-    _openocdArguments = "";
+    if (!_telnetProcess)
+        _telnetProcess = new QProcess(this);
     _openocdlogsTabWidget = nullptr;
 }
 
@@ -27,9 +29,13 @@ QProcess* SeerOpenOCDWidget::openocdProcess()
 {
     return _openocdProcess;
 }
+
+QProcess* SeerOpenOCDWidget::telnetProcess()
+{
+    return _telnetProcess;
+}
 /***********************************************************************************************************************
- * startOpenOCD: Run a openOCD process, return true if on success, false if fail                                       *
- * Argument: QString command                                                                                           *
+ * OpenOCD process                                                                                                     *
  **********************************************************************************************************************/
 bool SeerOpenOCDWidget::startOpenOCD (const QString &openocdExe, const QString &command)
 {
@@ -66,6 +72,39 @@ bool SeerOpenOCDWidget::isOpenocdRunning ()
 {
     if (_openocdProcess)
         if (_openocdProcess->state() == QProcess::Running) {
+            return true;
+        }
+    return false;
+}
+/***********************************************************************************************************************
+ * Telnet process                                                                                                      *
+ **********************************************************************************************************************/
+bool SeerOpenOCDWidget::startTelnet (const QString &port)
+{
+    if (_telnetProcess->state() == QProcess::NotRunning) {
+        _telnetProcess->start("telnet", {"localhost", port});
+        return true;
+    }
+    return false;
+}
+
+void SeerOpenOCDWidget::killTelnet ()
+{
+    if (_telnetProcess)
+    {
+        if (_telnetProcess->state() == QProcess::Running) {
+            _telnetProcess->kill();
+             _telnetProcess->waitForFinished();
+            delete _telnetProcess;
+            _telnetProcess = nullptr;
+        }
+    }
+}
+
+bool SeerOpenOCDWidget::isTelnetRunning ()
+{
+    if (_telnetProcess)
+        if (_telnetProcess->state() == QProcess::Running) {
             return true;
         }
     return false;
