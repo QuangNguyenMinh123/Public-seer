@@ -10,10 +10,6 @@ static QLoggingCategory LC("seer.gdbmonitor");
 GdbMonitor::GdbMonitor (QObject* parent) : QObject(parent) {
     _process = 0;
     _countIgnoreFlag = 0;
-    // Docker
-    _isBuildInDocker    = false;
-    _absoluteBuildPath  = "";
-    _dockerBuildPath    = "";
 }
 
 GdbMonitor::~GdbMonitor () {
@@ -194,39 +190,4 @@ void GdbMonitor::removeQuickBreakpointFlag ()
 bool GdbMonitor::isAddingQuickBreakpoint()
 {
     return _countIgnoreFlag;
-}
-
-// If symbol is built in docker, then this would be helpful
-bool GdbMonitor::isBuiltInDocker()
-{
-    return _isBuildInDocker;
-}
-
-void GdbMonitor::setBuiltInDocker(bool check)
-{
-    _isBuildInDocker = check;
-}
-
-const QString GdbMonitor::absoluteBuildFolderPath()
-{
-    return _absoluteBuildPath;
-}
-
-void GdbMonitor::setAbsoluteBuildFolderPath(const QString& path)
-{
-    _absoluteBuildPath = path;
-    if (_absoluteBuildPath.endsWith('/'))       // If end with '/', chop it    
-        _absoluteBuildPath.chop(1);
-}
-
-const QString GdbMonitor::dockerBuildFolderPath()
-{
-    return _dockerBuildPath;
-}
-
-void GdbMonitor::setDockerBuildFolderPath(const QString& path)
-{
-    _dockerBuildPath = path;
-    if (_dockerBuildPath.endsWith('/'))         // If end with '/', chop it    
-        _dockerBuildPath.chop(1);
 }

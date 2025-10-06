@@ -4566,6 +4566,8 @@ const QString SeerGdbWidget::absoluteBuildFolderPath()
 void SeerGdbWidget::setAbsoluteBuildFolderPath(const QString& path)
 {
     _absoluteBuildPath = path;
+    if (_absoluteBuildPath.endsWith('/'))       // If end with '/', chop it    
+        _absoluteBuildPath.chop(1);
 }
 
 const QString SeerGdbWidget::dockerBuildFolderPath()
@@ -4576,6 +4578,8 @@ const QString SeerGdbWidget::dockerBuildFolderPath()
 void SeerGdbWidget::setDockerBuildFolderPath(const QString& path)
 {
     _dockerBuildPath = path;
+    if (_dockerBuildPath.endsWith('/'))         // If end with '/', chop it    
+        _dockerBuildPath.chop(1);
 }
 
 // ::Kernel
@@ -4670,11 +4674,7 @@ void SeerGdbWidget::handleGdbMultiarchOpenOCDExecutable()
     // Now, set _gdbProgram as gdb-multiarch, provided by openocd launch mode
     setGdbProgram(gdbMultiarchExePath());
     setGdbMultiarchRunningState(true);          // always assume that target is running
-    // Inform gdbMonitor that openOCD is running and if symbol file is built in docker, then _dockerBuildPath
-    // shall be replace by _absoluteBuildPath
-    _gdbMonitor->setBuiltInDocker(isBuiltInDocker());
-    _gdbMonitor->setAbsoluteBuildFolderPath(absoluteBuildFolderPath());
-    _gdbMonitor->setDockerBuildFolderPath(dockerBuildFolderPath());
+
     // OpenOCD works in connect mode, so use code of handleGdbConnectExecutable()
     qCDebug(LC) << "Starting 'openocd gdb-multiarch connect'";
 

@@ -885,7 +885,6 @@ void SeerMainWindow::handleHelpAbout () {
 void SeerMainWindow::handleTerminateExecutable () {
 
     gdbWidget->handleGdbTerminateExecutable();
-    gdbWidget->gdbMonitor()->setBuiltInDocker(false);
     gdbWidget->setExecutableLaunchMode("");
     handleGdbStateChanged();
     QApplication::setOverrideCursor(Qt::ArrowCursor);
