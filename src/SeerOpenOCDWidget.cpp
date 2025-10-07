@@ -10,9 +10,13 @@ SeerOpenOCDWidget::SeerOpenOCDWidget (QWidget* parent) {
     _openocdProcess = new QProcess(this);
     _telnetProcess = new QProcess(this);
     _openocdlogsTabWidget = nullptr;
+    _isTelnetReady = false;
+    _exceptionLevel = "";
 }
 
 SeerOpenOCDWidget::~SeerOpenOCDWidget (){
+    _isTelnetReady = false;
+    _exceptionLevel = "";
     killOpenOCD();
     killTelnet();
 }
@@ -33,6 +37,11 @@ QProcess* SeerOpenOCDWidget::openocdProcess()
 QProcess* SeerOpenOCDWidget::telnetProcess()
 {
     return _telnetProcess;
+}
+
+void SeerOpenOCDWidget::setTelnetPort (const QString& port)
+{
+    _telnetPort = port;
 }
 /***********************************************************************************************************************
  * OpenOCD process                                                                                                     *
@@ -109,6 +118,12 @@ bool SeerOpenOCDWidget::isTelnetRunning ()
         }
     return false;
 }
+
+qint64 SeerOpenOCDWidget::telnetExecuteCmd(const QString& cmd)
+{
+    qint64 bytesWritten = _telnetProcess->write((cmd + "\n").toUtf8());
+    return bytesWritten;
+}
 /***********************************************************************************************************************
  * Create a new console display for displaying openOCD log                                                             *
  **********************************************************************************************************************/
@@ -140,6 +155,21 @@ void SeerOpenOCDWidget::setConsoleVisible (bool flag)
 {
     _openocdlogsTabWidget->setVisible(flag);
 }
+
+bool SeerOpenOCDWidget::isTelnetPortReady ()
+{
+    return _isTelnetReady;
+}
+
+void SeerOpenOCDWidget::setStopAtException(const QString& exceptionLevel)
+{
+    _exceptionLevel = exceptionLevel;
+}
+
+void SeerOpenOCDWidget::setOpenOCDTarget(const QString& target)
+{
+    _openOCDTarget = target;
+}
 /***********************************************************************************************************************
  * Slot                                                                                                                *
  **********************************************************************************************************************/
@@ -162,6 +192,26 @@ void SeerOpenOCDWidget::handleReadError ()
         QMessageBox::warning(nullptr, QObject::tr("Seer"), QObject::tr("OpenOCD failed to start. \nCheck openOCD output for details."));
         killOpenOCD();
         emit openocdStartFailed();
+    }
+    if (Text.contains("Listening on port") && Text.contains("for telnet connections"))
+    {
+        _isTelnetReady = true;
+        startTelnet(_telnetPort);
+        if (_exceptionLevel != "")
+        {
+            QMap<QString, QString> exceptionMap;
+            exceptionMap["EL1H"]="sec_el1";
+            exceptionMap["EL3H"]="sec_el3";
+            exceptionMap["N-EL1H"]="nsec_el1";
+            exceptionMap["N-EL2H"]="nsec_el2";
+            exceptionMap["EL1H / EL3H"]="sec_el1 sec_el3";
+            exceptionMap["N-EL1H / N-EL2H"]="nsec_el1 nsec_el2";
+            exceptionMap["off"]="off";
+            if (_openOCDTarget == "")
+                return;
+            // send cmd to telnet
+            telnetExecuteCmd(QString(_openOCDTarget + " catch_exc " + exceptionMap[_exceptionLevel]));
+        }
     }
     _openocdlogsTabWidget->handleText(Text);
 }

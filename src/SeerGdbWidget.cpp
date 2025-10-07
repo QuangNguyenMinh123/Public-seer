@@ -437,7 +437,7 @@ SeerGdbWidget::SeerGdbWidget (QWidget* parent) : QWidget(parent) {
     QObject::connect(breakpointsSaveToolButton,                                 &QToolButton::clicked,                                                                      this,                                                           &SeerGdbWidget::handleGdbSaveBreakpoints);
     QObject::connect(helpToolButton,                                            &QToolButton::clicked,                                                                      this,                                                           &SeerGdbWidget::handleHelpToolButtonClicked);
 
-    // openocd: if OpenOCD failed to start because the port is already in use, run handleOpenOCDStartFailed
+    // openocd: if OpenOCD failed to start because the port is already in use, run handleOpenOCDStartFailed quangnm13: deploy later
     // QObject::connect(SeerOpenOCDWidgetNp::getOpenOCDWidget(),                   &SeerOpenOCDWidget::SeerOpenOCDWidget::openocdStartFailed,                                  this,                                                           &SeerGdbWidget::handleOpenOCDStartFailed);
 #if ENABLE_GDB_LOGOUT == 1
     // For debuging
@@ -4547,6 +4547,16 @@ void SeerGdbWidget::setGdbMultiarchExeptionLevelToStop (const QString& level) {
     _exceptionLevelToStop = level;
 }
 
+const QString SeerGdbWidget::openOCDTarget ()
+{
+    return _openOCDTarget;
+}
+
+void SeerGdbWidget::setOpenOCDTarget (const QString& target)
+{
+    _openOCDTarget = target;
+}
+
 // :: Docker
 bool SeerGdbWidget::isBuiltInDocker()
 {
@@ -4582,21 +4592,13 @@ void SeerGdbWidget::setDockerBuildFolderPath(const QString& path)
         _dockerBuildPath.chop(1);
 }
 
-// ::Kernel
-const QString& SeerGdbWidget::kernelSymbolPath () {
-    return _kernelSymbolPath;
-}
-
-void SeerGdbWidget::setKernelSymbolPath (const QString& path){
-    _kernelSymbolPath = path;
-}
-
-const QString& SeerGdbWidget::kernelCodePath () {
-    return _kernelCodePath;
-}
-
-void SeerGdbWidget::setKernelCodePath (const QString& path){
-    _kernelCodePath = path;
+// ::Symbol Files
+void SeerGdbWidget::setSymbolFiles(const QMap<QString, QString>& symbolFiles)
+{
+    _symbolFiles.clear();
+    for (auto it = symbolFiles.constBegin(); it != symbolFiles.constEnd(); ++it) {
+        _symbolFiles[it.key()]=it.value();
+    }
 }
 
 SeerOpenOCDWidget* SeerGdbWidget::openOCDWidgetInstance() {
@@ -4654,6 +4656,13 @@ void SeerGdbWidget::handleGdbMultiarchOpenOCDExecutable()
     // Create the OpenOCD console tab, add to the log tabs
     openocdWidget->newOpenOCDWidget();
     openocdWidget->createOpenOCDConsole(logsTabWidget);
+    openocdWidget->setTelnetPort(telnetPort());
+    openocdWidget->setOpenOCDTarget(_openOCDTarget);
+    
+    if (isGdbMultiarchStopAtException())
+        openocdWidget->setStopAtException(gdbMultiarchExeptionLevelToStop());
+    else
+        openocdWidget->setStopAtException("");
     // Start OpenOCD with the given path and command
     bool foo = openocdWidget->startOpenOCD(openOCDExePath(), openOCDCommand());
     if (foo == false) {
@@ -4664,17 +4673,9 @@ void SeerGdbWidget::handleGdbMultiarchOpenOCDExecutable()
                                    QMessageBox::Ok);
         return;
     }
-    foo = openocdWidget->startTelnet(telnetPort());
-    if (foo == false) {
-        QMessageBox::warning(this, "Seer",
-                                   QString("Unable to launch the Telnet.\n") + QString("Please check your Telnet."),
-                                   QMessageBox::Ok);
-        return;
-    }
     // Now, set _gdbProgram as gdb-multiarch, provided by openocd launch mode
     setGdbProgram(gdbMultiarchExePath());
     setGdbMultiarchRunningState(true);          // always assume that target is running
-
     // OpenOCD works in connect mode, so use code of handleGdbConnectExecutable()
     qCDebug(LC) << "Starting 'openocd gdb-multiarch connect'";
 
@@ -4738,16 +4739,22 @@ void SeerGdbWidget::handleGdbMultiarchOpenOCDExecutable()
         handleGdbCommand(QString("%1").arg(gdbMultiarchCommand()));
         // Load the executable, if needed.
         if (newExecutableFlag() == true) {
-            // handleGdbExecutableName();
-            handleGdbCommand(QString("-file-exec-and-symbols ") + kernelSymbolPath());
+            for (auto it = _symbolFiles.constBegin(); it != _symbolFiles.constEnd(); ++it) {
+                QString loadSymbolCmd = "-file-exec-and-symbols " + it.key();
+                handleGdbCommand(loadSymbolCmd);
+            }
+            
             handleGdbExecutableSources();           // Load the program source files. gdb-multiarch keeps
             handleGdbExecutableLoadBreakpoints();   // Set the program's breakpoints (if any) before running. gdb-multiarch keeps
 
             setNewExecutableFlag(false);
         }
 
+        for (auto it = _symbolFiles.constBegin(); it != _symbolFiles.constEnd(); ++it) {
+            QString loadSourceCmd = "-environment-cd \"" + it.value() + "\"";
+            handleGdbCommand(loadSourceCmd);
+        }
         // Set or reset some things.
-        handleGdbCommand(QString("-environment-cd \"") + kernelCodePath() + "\"");
         handleGdbAssemblyDisassemblyFlavor();   // Set the disassembly flavor to use.
         handleGdbAssemblySymbolDemangling();    // Set the symbol demangling.
 
@@ -5081,3 +5088,31 @@ void SeerGdbWidget::traceIdentifierHandler(const QString& identifier)
         // For desktop application
     }
 }
+
+/***********************************************************************************************************************
+ * Functions for handling exception level                                                                              *
+ **********************************************************************************************************************/
+void SeerGdbWidget::handleExceptionLevelChanged(const QString& exceptionLevel)
+{
+    // Check document: OpenOCD.pdf: section "16.6.6 ARMv8-A specific commands" for more information
+    QMap<QString, QString> exceptionMap;
+    exceptionMap["EL1H"]="sec_el1";
+    exceptionMap["EL3H"]="sec_el3";
+    exceptionMap["N-EL1H"]="nsec_el1";
+    exceptionMap["N-EL2H"]="nsec_el2";
+    exceptionMap["EL1H / EL3H"]="sec_el1 sec_el3";
+    exceptionMap["N-EL1H / N-EL2H"]="nsec_el1 nsec_el2";
+    exceptionMap["off"]="off";
+    if (_openOCDTarget == "")
+        return;
+    // send cmd to telnet
+    qint64 bytesWritten = openocdWidget->telnetExecuteCmd(QString(_openOCDTarget + " catch_exc " + exceptionMap[exceptionLevel]));
+    if (bytesWritten == -1) {
+        qWarning() << "Failed to write to process!";
+    } else {
+        qDebug() << "Successfully wrote" << bytesWritten << "bytes.";
+    }
+        
+}
+
+

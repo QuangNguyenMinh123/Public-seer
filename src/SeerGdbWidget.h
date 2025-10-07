@@ -242,7 +242,8 @@ class SeerGdbWidget : public QWidget, protected Ui::SeerGdbWidgetForm {
         void                                setGdbMultiarchStopAtExeption  (bool check);
         const QString                       gdbMultiarchExeptionLevelToStop     ();
         void                                setGdbMultiarchExeptionLevelToStop  (const QString& level);
-        
+        const QString                       openOCDTarget                       ();
+        void                                setOpenOCDTarget                    (const QString& target);
         // ::Docker
         bool                                isBuiltInDocker                     ();
         void                                setBuiltInDocker                    (bool check);
@@ -251,11 +252,8 @@ class SeerGdbWidget : public QWidget, protected Ui::SeerGdbWidgetForm {
         const QString                       dockerBuildFolderPath               ();
         void                                setDockerBuildFolderPath            (const QString& path);
 
-        // ::Kernel
-        const QString&                      kernelSymbolPath                    ();
-        void                                setKernelSymbolPath                 (const QString& path);
-        const QString&                      kernelCodePath                      ();
-        void                                setKernelCodePath                   (const QString& path);
+        // ::Symbol Files
+        void                                setSymbolFiles                      (const QMap<QString, QString>& symbolFiles);
 
         void                                setGdbMultiarchPid                  (int pid);
         void                                setNewHardwareBreakpointFlag        (bool flag);
@@ -450,6 +448,9 @@ class SeerGdbWidget : public QWidget, protected Ui::SeerGdbWidgetForm {
         // For handling tracing functions, variables and types
         void                                handleSeekIdentifier                (const QString& identifier);
 
+        // Handling exception level changed
+        void                                handleExceptionLevelChanged         (const QString& exceptionLevel);
+
     signals:
         void                                stoppingPointReached                ();
         void                                sessionTerminated                   ();
@@ -573,9 +574,8 @@ class SeerGdbWidget : public QWidget, protected Ui::SeerGdbWidgetForm {
         bool                                _isBuildInDocker;
         QString                             _absoluteBuildPath;
         QString                             _dockerBuildPath;
-        // Kernel
-        QString                             _kernelSymbolPath;
-        QString                             _kernelCodePath;
+        // Symbol Files
+        QMap<QString, QString>              _symbolFiles;
         // gdb multiarch variables
         bool                                _newHBreakFlag;
         bool                                _isTargetRunning;               // hold target state: running / halted
@@ -583,7 +583,8 @@ class SeerGdbWidget : public QWidget, protected Ui::SeerGdbWidgetForm {
         bool                                _isStopAtTempFunc;
         QString                             _stopAtFunc;
         bool                                _isStopAtException;
-        QString                             _exceptionLevelToStop;        
+        QString                             _exceptionLevelToStop;
+        QString                             _openOCDTarget;        
         // Kernel module
         QString                             _moduleName;
         QString                             _commandToTerm;

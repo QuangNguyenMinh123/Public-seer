@@ -466,6 +466,7 @@ void SeerMainWindow::launchExecutable (const QString& launchMode, const QString&
     // openocd
     actionOpenOCDAttach->setVisible(false);
     menuOpenOCD->menuAction()->setVisible(false);
+    deleteExceptionLevelBar();
 
     // if OpenOCD tab exists, kill it along with any running OpenOCD process.
     if (gdbWidget->openOCDWidgetInstance()->openocdProcess())
@@ -527,6 +528,8 @@ void SeerMainWindow::launchExecutable (const QString& launchMode, const QString&
         actionOpenOCDAttach->setVisible(true);
         // launch gdb-multiarch and openocd
         gdbWidget->handleGdbMultiarchOpenOCDExecutable();
+        // add exception level bar
+        createExceptionLevelBar();
 
     }else if (launchMode == "project") {
 
@@ -662,12 +665,13 @@ void SeerMainWindow::handleFileDebug () {
     setBuiltInDocker(dlg.isBuiltInDocker());
     setAbsoluteBuildFolderPath(dlg.absoluteBuildFolderPath());
     setDockerBuildFolderPath(dlg.dockerBuildFolderPath());
-    setKernelSymbolPath(dlg.kernelSymbolPath());
-    setKernelCodePath(dlg.kernelCodePath());
     setGdbMultiarchStopAtTempFunc(dlg.isGdbMultiarchIsStopAtTempFunc());
     setGdbMultiarchStopAtFunc(dlg.gdbMultiarchStopAtFunc());
     setGdbMultiarchStopAtExeption(dlg.isGdbMultiarchStopAtException());
     setGdbMultiarchExeptionLevelToStop(dlg.gdbMultiarchExeptionLevelToStop());
+    setOpenOCDTarget(dlg.openOCDTarget());
+    setSymbolFiles(dlg.symbolWidgetManager()->symbolFiles());
+
     gdbWidget->setGdbMultiarchPid(0);           // clear current gdb-multiarch pid
 
     launchExecutable(launchMode, breakMode);
@@ -891,6 +895,7 @@ void SeerMainWindow::handleTerminateExecutable () {
     _runStatus->handleTerminate();
     menuOpenOCD->menuAction()->setVisible(false);
     actionOpenOCDAttach->setVisible(false);
+    deleteExceptionLevelBar();
 }
 
 void SeerMainWindow::handleRestartExecutable () {
@@ -939,6 +944,8 @@ void SeerMainWindow::handleRestartExecutable () {
         menuOpenOCD->menuAction()->setVisible(true);
         actionOpenOCDAttach->setVisible(true);
         gdbWidget->handleGdbMultiarchOpenOCDExecutable();
+        // add exception level bar
+        createExceptionLevelBar();
 
     }
     else{
@@ -2001,21 +2008,20 @@ void SeerMainWindow::setDockerBuildFolderPath(const QString& path)
     return gdbWidget->setDockerBuildFolderPath(path);
 }
 
-// ::Kernel
-const QString& SeerMainWindow::kernelSymbolPath () {
-    return gdbWidget->kernelSymbolPath();
+const QString SeerMainWindow::openOCDTarget ()
+{
+    return gdbWidget->openOCDTarget();
 }
 
-void SeerMainWindow::setKernelSymbolPath (const QString& path){
-    gdbWidget->setKernelSymbolPath(path);
+void SeerMainWindow::setOpenOCDTarget (const QString& target)
+{
+    gdbWidget->setOpenOCDTarget(target);
 }
 
-const QString& SeerMainWindow::kernelCodePath () {
-    return gdbWidget->kernelCodePath();
-}
-
-void SeerMainWindow::setKernelCodePath (const QString& path){
-    gdbWidget->setKernelCodePath(path);
+// ::Symbol Files
+void SeerMainWindow::setSymbolFiles (const QMap<QString, QString>& _symbolFiles)
+{
+    gdbWidget->setSymbolFiles(_symbolFiles);
 }
 
 // Disable some button while target is running
@@ -2070,4 +2076,39 @@ void SeerMainWindow::handleStatusChanged(QString message) {
         handleGdbTargetRunning();
     }
     
+}
+/***********************************************************************************************************************
+ * OpenOCD Exception Level on Menubar                                                                                  *
+ **********************************************************************************************************************/
+void SeerMainWindow::createExceptionLevelBar()
+{
+    _groupExeptionLevel = new QWidget(this);
+    QHBoxLayout* groupLayout = new QHBoxLayout(_groupExeptionLevel);
+    groupLayout->setContentsMargins(0, 0, 0, 0); // remove extra space
+    groupLayout->setSpacing(5); // spacing between checkbox and combo
+
+    _exceptionButton = new QPushButton("Enable Exeption Level", _groupExeptionLevel);
+    _exceptionComboBox = new QComboBox(_groupExeptionLevel);
+    _exceptionComboBox->addItems({"EL1H", "EL3H", "N-EL1H", "N-EL2H", "EL1H / EL3H", "N-EL1H / N-EL2H", "off"});
+
+    _exceptionComboBox->setEnabled(true);
+    // Add widgets to layout
+    groupLayout->addWidget(_exceptionButton);
+    groupLayout->addWidget(_exceptionComboBox);
+    toolBar->addWidget(_groupExeptionLevel);
+
+    QObject::connect(_exceptionButton,      &QPushButton::clicked,              this,      &SeerMainWindow::handleExceptionButtonClicked);
+    QObject::connect(_exceptionComboBox,    &QComboBox::currentTextChanged,     gdbWidget, &SeerGdbWidget::handleExceptionLevelChanged);
+}
+
+void SeerMainWindow::deleteExceptionLevelBar()
+{
+    if (_groupExeptionLevel)
+        delete _groupExeptionLevel;
+    _groupExeptionLevel = nullptr;
+}
+
+void SeerMainWindow::handleExceptionButtonClicked ()
+{
+    gdbWidget->handleExceptionLevelChanged(_exceptionComboBox->currentText());
 }

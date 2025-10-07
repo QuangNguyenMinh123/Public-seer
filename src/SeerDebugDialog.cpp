@@ -16,6 +16,10 @@
 #include <QtCore/QDebug>
 #include <QtWidgets/QCheckBox>
 #include <QtGlobal>
+#include <QScrollArea>
+#include <QFormLayout>
+#include <QLabel>
+#include <QHBoxLayout>
 
 SeerDebugDialog::SeerDebugDialog (QWidget* parent) : QDialog(parent) {
 
@@ -63,14 +67,20 @@ SeerDebugDialog::SeerDebugDialog (QWidget* parent) : QDialog(parent) {
     runModeTabWidget->setCornerWidget(hcontainer, Qt::TopRightCorner);
 
     exceptionLevelComboBox->addItem(QString("EL1H"));
-    exceptionLevelComboBox->addItem(QString("EL2H"));
-    exceptionLevelComboBox->addItem(QString("EL2H"));
     exceptionLevelComboBox->addItem(QString("EL3H"));
+    exceptionLevelComboBox->addItem(QString("N-EL1H"));
+    exceptionLevelComboBox->addItem(QString("N-EL2H"));
+    exceptionLevelComboBox->addItem(QString("EL1H / EL3H"));
+    exceptionLevelComboBox->addItem(QString("N-EL1H / N-EL2H"));
+    exceptionLevelComboBox->addItem(QString("off"));
     exceptionLevelComboBox->setCurrentIndex(0);
     tempFuncLineEdit->setEnabled(false);
     exceptionLevelComboBox->setEnabled(false);
     absolutePathLineEdit->setEnabled(false);
     dockerPathLineEdit->setEnabled(false);
+
+    _OpenOCDSymbolWidgetManager = new OpenOCDSymbolWidgetManager(this);
+    openOCDTabWidget->addTab(_OpenOCDSymbolWidgetManager, "Symbol Files");
 
     // Connect things.
     QObject::connect(executableNameToolButton,             &QToolButton::clicked,               this, &SeerDebugDialog::handleExecutableNameToolButton);
@@ -95,8 +105,6 @@ SeerDebugDialog::SeerDebugDialog (QWidget* parent) : QDialog(parent) {
     QObject::connect(openOCDMainDefaultSettingButton,      &QToolButton::clicked,               this, &SeerDebugDialog::handleOpenOCDDefaultButtonClicked);
     QObject::connect(openOCDTabWidget,                     &QTabWidget::currentChanged,         this, &SeerDebugDialog::handleOpenOCDTabChanged);
     QObject::connect(executableOpenOCDButton,              &QToolButton::clicked,               this, &SeerDebugDialog::handleExecutableOpenOCDButtonClicked);
-    QObject::connect(openOCDKernelKernelSymbolPathButton,  &QToolButton::clicked,               this, &SeerDebugDialog::handleOpenOCDKernelSymbolPathButtonClicked);
-    QObject::connect(openOCDKernelKernelDirPathButton,     &QToolButton::clicked,               this, &SeerDebugDialog::handleOpenOCDKernelDirPathButton);
     QObject::connect(dockerCheckBox,                       &QCheckBox::clicked,                 this, &SeerDebugDialog::handleOpenOCDDockerCheckboxClicked);
     QObject::connect(absolutePathButton,                   &QToolButton::clicked,               this, &SeerDebugDialog::handleOpenOCDBuildFolderPathButton);
     QObject::connect(openOCDMainHelpButton,                &QToolButton::clicked,               this, &SeerDebugDialog::handleOpenOCDMainHelpButtonClicked);
@@ -703,11 +711,10 @@ void SeerDebugDialog::loadProject (const QString& filename, bool notify) {
         openOCD_GDB_Port_LineEdit               ->setText(openocdModeJson["gdbPort"].toString());
         openOCD_Telnet_Port_LineEdit            ->setText(openocdModeJson["telnetPort"].toString());
         openOCDGdbCommandLineEdit               ->setText(openocdModeJson["gdbMultiarchCommand"].toString());
+        openOCDTargetLineEdit                   ->setText(openocdModeJson["openOCDTarget"].toString());
         dockerCheckBox                          ->setChecked(openocdModeJson["dockerCheckBox"].toBool());
         absolutePathLineEdit                    ->setText(openocdModeJson["absolutePathLineEdit"].toString());
         dockerPathLineEdit                      ->setText(openocdModeJson["dockerPathLineEdit"].toString());
-        openOCDKernelKernelSymbolLineEdit       ->setText(openocdModeJson["kernelSymbolPath"].toString());
-        openOCDKernelKernelDirLineEdit          ->setText(openocdModeJson["kernelCodePath"].toString());
         tempFuncCheckBox                        ->setChecked(openocdModeJson["tempFuncCheckBox"].toBool());
         tempFuncLineEdit                        ->setText(openocdModeJson["tempFuncLineEdit"].toString());
         stopExceptionLebelCheckBox              ->setChecked(openocdModeJson["stopExceptionLebelCheckBox"].toBool());
@@ -732,6 +739,19 @@ void SeerDebugDialog::loadProject (const QString& filename, bool notify) {
         {
             absolutePathLineEdit->setEnabled(false);
             dockerPathLineEdit->setEnabled(false);
+        }
+
+        // Load symbol files
+        _symbolFiles.clear();
+        while (_OpenOCDSymbolWidgetManager->countSymbolFiles() > 1)
+            _OpenOCDSymbolWidgetManager->deleteGroupBox();
+        _OpenOCDSymbolWidgetManager->deleteGroupBox();
+        QJsonArray array = openocdModeJson["symbolFiles"].toArray();
+        for (const QJsonValue &value : array) {
+            QJsonObject obj = value.toObject();
+            QString symbol = obj["symbolFile"].toString();
+            QString source = obj["sourcePath"].toString();
+            _OpenOCDSymbolWidgetManager->addGroupBox(symbol, source);
         }
 
         setLaunchMode("openocd");
@@ -865,16 +885,27 @@ void SeerDebugDialog::handleSaveProjectToolButton () {
         modeJson["gdbPort"]                     = openOCD_GDB_Port_LineEdit->text();
         modeJson["telnetPort"]                  = openOCD_Telnet_Port_LineEdit->text();
         modeJson["gdbMultiarchCommand"]         = openOCDGdbCommandLineEdit->text();
+        modeJson["openOCDTarget"]               = openOCDTargetLineEdit->text();
         modeJson["dockerCheckBox"]              = dockerCheckBox->isChecked();
         modeJson["absolutePathLineEdit"]        = absolutePathLineEdit->text();
         modeJson["dockerPathLineEdit"]          = dockerPathLineEdit->text();
-        modeJson["kernelSymbolPath"]            = openOCDKernelKernelSymbolLineEdit->text();
-        modeJson["kernelCodePath"]              = openOCDKernelKernelDirLineEdit->text();
         modeJson["tempFuncCheckBox"]            = tempFuncCheckBox->isChecked();
         modeJson["tempFuncLineEdit"]            = tempFuncLineEdit->text();
         modeJson["stopExceptionLebelCheckBox"]  = stopExceptionLebelCheckBox->isChecked();
         modeJson["exceptionLevelComboBox"]      = exceptionLevelComboBox->currentText();
+        modeJson["numberSymbolFile"]            = _OpenOCDSymbolWidgetManager->countSymbolFiles();
+        QJsonArray symbolFileArray;
+        const QMap<QString, QString> symbolFiles = _OpenOCDSymbolWidgetManager->symbolFiles();
 
+        int index = 0;
+        for (auto it = symbolFiles.constBegin(); it != symbolFiles.constEnd(); ++it, ++index) {
+            QJsonObject entry;
+            entry["index"] = index;
+            entry["symbolFile"] = it.key();
+            entry["sourcePath"] = it.value();
+            symbolFileArray.append(entry);
+        }
+        modeJson["symbolFiles"] = symbolFileArray;
         seerProjectJson["openocdmode"] = modeJson;
     }
 
@@ -1157,6 +1188,15 @@ void SeerDebugDialog::setGdbMultiarchExeptionLevelToStop (const QString& level) 
     exceptionLevelComboBox->setCurrentText(level);
 }
 
+const QString SeerDebugDialog::openOCDTarget ()
+{
+    return openOCDTargetLineEdit->text();
+}
+
+void SeerDebugDialog::setOpenOCDTarget (const QString& target)
+{
+    openOCDTargetLineEdit->setText(target);
+}
 // :: Docker
 bool SeerDebugDialog::isBuiltInDocker()
 {
@@ -1187,21 +1227,16 @@ void SeerDebugDialog::setDockerBuildFolderPath(const QString& path)
 {
     return dockerPathLineEdit->setText(path);
 }
-// ::Kernel
-const QString SeerDebugDialog::kernelSymbolPath () {
-    return openOCDKernelKernelSymbolLineEdit->text();
+
+// :: Symbol Files
+OpenOCDSymbolWidgetManager* SeerDebugDialog::symbolWidgetManager()
+{
+    return _OpenOCDSymbolWidgetManager;
 }
 
-void SeerDebugDialog::setKernelSymbolPath (const QString& path){
-    openOCDKernelKernelSymbolLineEdit->setText(path);
-}
+void SeerDebugDialog::setSymbolFiles (const QMap<QString, QString>& symbolFiles)
+{
 
-const QString SeerDebugDialog::kernelCodePath () {
-    return openOCDKernelKernelDirLineEdit->text();
-}
-
-void SeerDebugDialog::setKernelCodePath (const QString& path){
-    openOCDKernelKernelDirLineEdit->setText(path);
 }
 /***********************************************************************************************************************
  * OpenOCD Slots                                                                                                       *
@@ -1239,22 +1274,6 @@ void SeerDebugDialog::handleExecutableOpenOCDButtonClicked () {
 
     if (name != "") {
         setOpenOCDExePath(name);
-    }
-}
-
-void SeerDebugDialog::handleOpenOCDKernelSymbolPathButtonClicked () {
-    QString name = QFileDialog::getOpenFileName(this, "Select vmlinuz Kernel Symbol.", kernelSymbolPath(), "", nullptr, QFileDialog::DontUseNativeDialog);
-
-    if (name != "") {
-        setKernelSymbolPath(name);
-    }
-}
-
-void SeerDebugDialog::handleOpenOCDKernelDirPathButton () {
-    QString name = QFileDialog::getExistingDirectory(this, "Select kernel source code directory.", kernelCodePath(), QFileDialog::ShowDirsOnly|QFileDialog::DontUseNativeDialog);
-
-    if (name != "") {
-        setKernelCodePath(name);
     }
 }
 
@@ -1311,4 +1330,191 @@ void SeerDebugDialog::handleOpenOCDStopExceptionLebelCheckBoxClicked()
     {
         exceptionLevelComboBox->setEnabled(false);
     }
+}
+
+/***********************************************************************************************************************
+ * OpenOCD Symbol Widget, for single symbol file widget                                                                *
+ **********************************************************************************************************************/
+OpenOCDSymbolFileWidget::OpenOCDSymbolFileWidget(QWidget *parent)
+    : QWidget(parent)
+{
+    auto *mainLayout = new QVBoxLayout(this);
+    QFormLayout *formLayout = new QFormLayout;
+
+    // Row 1
+    QWidget *rowWidget1 = new QWidget(this);
+    QHBoxLayout *rowLayout1 = new QHBoxLayout(rowWidget1);
+    rowLayout1->setContentsMargins(0, 0, 0, 0);
+
+    _symbolLineEdit = new QLineEdit(this);
+    QPushButton *_symbolToolButton = new QPushButton("", this);
+    _symbolToolButton->setFixedSize(24, 23);
+    _symbolToolButton->setIcon(QIcon(":/seer/resources/RelaxLightIcons/document-open.svg"));
+
+    rowLayout1->addWidget(_symbolLineEdit);
+    rowLayout1->addWidget(_symbolToolButton);
+    formLayout->addRow(new QLabel("Symbol file"), rowWidget1);
+
+    // Row 2
+    QWidget *rowWidget2 = new QWidget(this);
+    QHBoxLayout *rowLayout2 = new QHBoxLayout(rowWidget2);
+    rowLayout2->setContentsMargins(0, 0, 0, 0);
+
+    _sourceLineEdit = new QLineEdit(this);
+    QPushButton *_sourceToolButton = new QPushButton("", this);
+    _sourceToolButton->setFixedSize(24, 23);
+    _sourceToolButton->setIcon(QIcon(":/seer/resources/RelaxLightIcons/document-open.svg"));
+
+    rowLayout2->addWidget(_sourceLineEdit);
+    rowLayout2->addWidget(_sourceToolButton);
+    formLayout->addRow(new QLabel("Source code"), rowWidget2);
+
+    mainLayout->addLayout(formLayout);
+
+    connect(_symbolToolButton, &QPushButton::clicked,  this, &OpenOCDSymbolFileWidget::handleOpenOCDSymbolPathButtonClicked);
+    connect(_sourceToolButton, &QPushButton::clicked,  this, &OpenOCDSymbolFileWidget::handleOpenOCDDirPathButtonClicked);
+}
+
+
+OpenOCDSymbolFileWidget::~OpenOCDSymbolFileWidget() {
+}
+
+void OpenOCDSymbolFileWidget::handleOpenOCDSymbolPathButtonClicked () {
+    QString name = QFileDialog::getOpenFileName(this, "Select Symbol File.", _symbolLineEdit->text(), "", nullptr, QFileDialog::DontUseNativeDialog);
+
+    if (name != "") {
+        _symbolPath = name;
+        _symbolLineEdit->setText(name);
+    }
+}
+
+void OpenOCDSymbolFileWidget::handleOpenOCDDirPathButtonClicked () {
+    QString name = QFileDialog::getExistingDirectory(this, "Select Source Code Directory.", _sourceLineEdit->text(), QFileDialog::ShowDirsOnly|QFileDialog::DontUseNativeDialog);
+
+    if (name != "") {
+        _sourcePath = name;
+        _sourceLineEdit->setText(name);
+    }
+}
+
+const QString OpenOCDSymbolFileWidget::symbolPath () {
+    return _symbolLineEdit->text();
+}
+
+const QString OpenOCDSymbolFileWidget::sourcePath () {
+    return _sourceLineEdit->text();
+}
+
+void OpenOCDSymbolFileWidget::setSymbolPath (const QString& path) {
+    _symbolPath = path;
+    _symbolLineEdit->setText(path);
+}
+
+void OpenOCDSymbolFileWidget::setSourcePath (const QString& path) {
+    _sourcePath = path;
+    _sourceLineEdit->setText(path);
+}
+
+/***********************************************************************************************************************
+ * OpenOCD -> Symbol file widget manager, used for handling multiple symbol files                                      *
+ **********************************************************************************************************************/
+OpenOCDSymbolWidgetManager::OpenOCDSymbolWidgetManager (QWidget* parent) : QWidget(parent) {
+    auto *mainLayout = new QVBoxLayout(this);
+
+    // --- Scrollable area ---
+    _scrollWidget = new QWidget(this);
+    _scrollLayout = new QVBoxLayout(_scrollWidget);
+    _scrollLayout->setAlignment(Qt::AlignTop);
+
+    QScrollArea *scrollArea = new QScrollArea(this);
+    scrollArea->setWidgetResizable(true);
+    scrollArea->setWidget(_scrollWidget);
+
+    mainLayout->addWidget(scrollArea);
+
+    // --- Fixed buttons at bottom ---
+    auto *buttonLayout = new QHBoxLayout;
+    QPushButton *moreButton = new QPushButton("More", this);
+    QPushButton *deleteButton = new QPushButton("Delete", this);
+    buttonLayout->addStretch();
+    buttonLayout->addWidget(moreButton);
+    buttonLayout->addWidget(deleteButton);
+    buttonLayout->addStretch();
+    mainLayout->addLayout(buttonLayout);
+
+    connect(moreButton,         &QPushButton::clicked,  this,   &OpenOCDSymbolWidgetManager::addEmptyGroupBox);
+    connect(deleteButton,       &QPushButton::clicked,  this,   &OpenOCDSymbolWidgetManager::deleteGroupBox);
+
+    // add the first group box
+    addEmptyGroupBox();
+    this->show();
+}
+
+OpenOCDSymbolWidgetManager::~OpenOCDSymbolWidgetManager() {
+
+}
+
+void OpenOCDSymbolWidgetManager::addEmptyGroupBox()
+{
+    if (_groupBoxes.size() >= 1)
+    {
+        OpenOCDSymbolFileWidget *lastBox = _groupBoxes.last();
+        if (lastBox->symbolPath() == "")
+            return;
+        if (lastBox->sourcePath() == "")
+            return;
+    }
+    OpenOCDSymbolFileWidget *box = new OpenOCDSymbolFileWidget(this);
+    // Form layout for labels + line edits
+    _scrollLayout->addWidget(box);
+    _groupBoxes.append(box);
+}
+
+void OpenOCDSymbolWidgetManager::addGroupBox(const QString& symbolFile, const QString& sourceDir)
+{
+    OpenOCDSymbolFileWidget *lastBox = _groupBoxes.last();
+    if (lastBox->symbolPath() == "" && lastBox->sourcePath() == "")
+    {
+        lastBox->setSymbolPath(symbolFile);
+        lastBox->setSourcePath(sourceDir);
+        return;
+    }
+    OpenOCDSymbolFileWidget *box = new OpenOCDSymbolFileWidget(this);
+    // Form layout for labels + line edits
+    _scrollLayout->addWidget(box);
+    _groupBoxes.append(box);
+    box->setSymbolPath(symbolFile);
+    box->setSourcePath(sourceDir);
+}
+
+void OpenOCDSymbolWidgetManager::deleteGroupBox()
+{
+    OpenOCDSymbolFileWidget *lastBox = _groupBoxes.last();
+    if (_groupBoxes.size() == 1)
+    {
+        lastBox->setSymbolPath("");
+        lastBox->setSourcePath("");
+        return;
+    }
+    OpenOCDSymbolFileWidget *takelastBox = _groupBoxes.takeLast();
+    _scrollLayout->removeWidget(takelastBox);
+    delete takelastBox;
+}
+
+
+const QMap<QString, QString> OpenOCDSymbolWidgetManager::symbolFiles () {
+    _symbolFiles.clear();
+    for (auto it = _groupBoxes.begin(); it != _groupBoxes.end(); ++it) {
+        OpenOCDSymbolFileWidget *box = *it;
+        if (box->symbolPath() == "")
+            continue;
+        if (box->sourcePath() == "")
+            continue;
+        _symbolFiles[box->symbolPath()] = box->sourcePath();
+    }
+    return _symbolFiles;
+}
+
+int OpenOCDSymbolWidgetManager::countSymbolFiles() {
+    return _groupBoxes.size();
 }

@@ -86,14 +86,16 @@ class SeerMainWindow : public QMainWindow, protected Ui::SeerMainWindowForm {
         void                                setGdbMultiarchExePath              (const QString& path);
         const QString&                      gdbMultiarchCommand                 ();
         void                                setGdbMultiarchCommand              (const QString& command);
-        bool                                isGdbMultiarchIsStopAtTempFunc ();
-        void                                setGdbMultiarchStopAtTempFunc (bool check);
-        const QString                       gdbMultiarchStopAtFunc ();
-        void                                setGdbMultiarchStopAtFunc (const QString& func);
-        bool                                isGdbMultiarchStopAtException ();
-        void                                setGdbMultiarchStopAtExeption (bool check);
-        const QString                       gdbMultiarchExeptionLevelToStop();
-        void                                setGdbMultiarchExeptionLevelToStop (const QString& level);
+        bool                                isGdbMultiarchIsStopAtTempFunc      ();
+        void                                setGdbMultiarchStopAtTempFunc       (bool check);
+        const QString                       gdbMultiarchStopAtFunc              ();
+        void                                setGdbMultiarchStopAtFunc           (const QString& func);
+        bool                                isGdbMultiarchStopAtException       ();
+        void                                setGdbMultiarchStopAtExeption       (bool check);
+        const QString                       gdbMultiarchExeptionLevelToStop     ();
+        void                                setGdbMultiarchExeptionLevelToStop  (const QString& level);
+        const QString                       openOCDTarget                       ();
+        void                                setOpenOCDTarget                    (const QString& target);
         // ::Docker
         bool                                isBuiltInDocker                     ();
         void                                setBuiltInDocker                    (bool check);
@@ -101,12 +103,9 @@ class SeerMainWindow : public QMainWindow, protected Ui::SeerMainWindowForm {
         void                                setAbsoluteBuildFolderPath          (const QString& path);
         const QString                       dockerBuildFolderPath               ();
         void                                setDockerBuildFolderPath            (const QString& path);
-        // ::Kernel
-        const QString&                      kernelSymbolPath                    ();
-        void                                setKernelSymbolPath                 (const QString& path);
-        const QString&                      kernelCodePath                      ();
-        void                                setKernelCodePath                   (const QString& path);
-    
+        // ::Symbol Files
+        void                                setSymbolFiles                      (const QMap<QString, QString>& _symbolFiles);
+
     private slots:
         void                        handleFileDebug                         ();
         void                        handleFileArguments                     ();
@@ -138,6 +137,7 @@ class SeerMainWindow : public QMainWindow, protected Ui::SeerMainWindowForm {
         void                        handleGdbTargetRunning                  ();
         void                        handleGdbTargetInterrupt                ();
         void                        handleStatusChanged                     (QString message);
+        void                        handleExceptionButtonClicked            ();
 
     protected:
         void                        writeSettings                           ();
@@ -151,12 +151,17 @@ class SeerMainWindow : public QMainWindow, protected Ui::SeerMainWindowForm {
         void                        refreshShortCuts                        ();
 
     private:
-        QActionGroup*               _styleMenuActionGroup;
-        QString                     _styleName;
-        QAction*                    _interruptAction;
-        SeerProgressIndicator*      _progressIndicator;
-        SeerKeySettings             _keySettings;
-        QString                     _projectFile;
-        SeerRunStatusIndicatorBox*  _runStatus;
+        void  createExceptionLevelBar();
+        void  deleteExceptionLevelBar();
+        QActionGroup*                       _styleMenuActionGroup;
+        QString                             _styleName;
+        QAction*                            _interruptAction;
+        SeerProgressIndicator*              _progressIndicator;
+        SeerKeySettings                     _keySettings;
+        QString                             _projectFile;
+        SeerRunStatusIndicatorBox*          _runStatus;
+        QWidget*                            _groupExeptionLevel = nullptr;
+        QPushButton*                        _exceptionButton;
+        QComboBox*                          _exceptionComboBox;
 };
 
