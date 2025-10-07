@@ -963,7 +963,7 @@ void SeerGdbWidget::handleText (const QString& text) {
 
     if (text.startsWith("*running")) {
         // If debugging on init is true, raise _debugOnInitOperationCv.notify to tell threadHandler that target is stopped
-        if (isDebugOnInit())
+        if (isDebugOnInit() || isSeekIdentifier())                       // if OpenOCD is running debug on init or seeing identifier,
         {
             _debugOnInitRunningMutex.lock();
             _debugOnInitRunningCv.notify_one();
@@ -974,8 +974,8 @@ void SeerGdbWidget::handleText (const QString& text) {
     }
     if (text.startsWith("*running,thread-id=\"all\"")) {
     // Probably a better way to handle all these types of stops.
-    }else if (text.startsWith("*stopped")) {
-        if (isDebugOnInit())            // If debugOnInitFlag is raised, then release mutex lock
+    } else if (text.startsWith("*stopped")) {
+        if (isDebugOnInit() || isSeekIdentifier())                       // if OpenOCD is running debug on init or seeing identifier,
         {
             _debugOnInitStopMutex.lock();
             _debugOnInitStopCv.notify_one();
@@ -1007,7 +1007,7 @@ void SeerGdbWidget::handleText (const QString& text) {
 
     } else if (text.startsWith("^done"))            // For handling debug on init
     {
-        if (!isDebugOnInit())                       // if OpenOCD is running debug on init
+        if (!(isDebugOnInit() || isSeekIdentifier()))                       // if OpenOCD is running debug on init or seeing identifier,
             return;
         if (text == "^done")                        // When bp is disabled or enabled or when kernel module source is loaded
         {
@@ -1115,6 +1115,40 @@ void SeerGdbWidget::handleText (const QString& text) {
         }
         else if (text.startsWith("^done,symbols"))          // seeking for function, variable and type identifiers
         {
+            //^done,symbols={debug=[{filename=" ",fullname=" ",
+            // symbols=[{line=" ",name="uwTick",type="volatile uint32_t",description="volatile uint32_t uwTick;"},}]}
+            _seekIdentifierMutex.lock();
+
+            QString debug_text = Seer::parseFirst(text, "debug=", '[', ']', false);
+            QStringList filenames_list = Seer::parse(debug_text, "", '{', '}', false);
+
+            for (const auto& filename_entry : filenames_list) {
+
+                QString filename_text = Seer::parseFirst(filename_entry, "filename=", '"', '"', false);
+                QString fullname_text = Seer::parseFirst(filename_entry, "fullname=", '"', '"', false);
+
+                // If that file is not in source browser, skip it
+                if (sourceLibraryManagerWidget->sourceBrowserWidget()->findFileWithRegrex(fullname_text).isEmpty())
+                    continue;
+
+                QString symbols_text = Seer::parseFirst(filename_entry, "symbols=", '[', ']', false);
+                QStringList symbols_list = Seer::parse(symbols_text, "", '{', '}', false);
+
+                for (const auto& symbol_entry : symbols_list) {
+
+                    QString line_text = Seer::parseFirst(symbol_entry, "line=", '"', '"', false);
+                    QString name_text = Seer::parseFirst(symbol_entry, "name=", '"', '"', false);
+
+                    if (name_text == _Identifier)           // you found it! signal to open file
+                    {
+                        editorManagerWidget->setEnableOpenFile(true);       // raise this flag to allow opening file
+                        editorManagerWidget->handleOpenFile(filename_text, fullname_text, line_text.toInt());
+                    }
+                }
+            }
+
+            _seekIdentifierCv.notify_one();
+            _seekIdentifierMutex.unlock();
 
         }
     }
@@ -1195,12 +1229,7 @@ void SeerGdbWidget::handleGdbCommand (const QString& command) {
     emit allTextOutput("From Widget:" + str);
 #endif
 
-    qint64 bytesWritten = _gdbProcess->write(bytes);       // Send the data into the stdin stream of the bash child process
-    if (bytesWritten == -1) {
-        qWarning() << "Failed to write to process!";
-    } else {
-        qDebug() << "Wrote" << bytesWritten << "bytes to process.";
-    }
+    _gdbProcess->write(bytes);       // Send the data into the stdin stream of the bash child process
 
 }
 
@@ -2364,11 +2393,12 @@ void SeerGdbWidget::handleGdbBreakpointDelete (QString breakpoints) {
         {
             setNewHardwareBreakpointFlag(true);
             _gdbMonitor->setNewHardBreakpointFlag();
+            editorManagerWidget->setEnableOpenFile(false);                  // when add bp at runtime, seer display source code when receives SIGINT, so this will fix it
             handleGdbInterruptSIGINT();
-            editorManagerWidget->setEnableOpenFile(false);                       // when add bp at runtime, seer display source code when receives SIGINT, so this will fix it
             handleGdbCommand("-break-delete " + breakpoints);
             handleGdbGenericpointList();
             handleGdbContinue();
+            editorManagerWidget->setEnableOpenFile(true);                   // re-enable open file
         }
         else    // simply delete bp
         {
@@ -2397,11 +2427,12 @@ void SeerGdbWidget::handleGdbBreakpointEnable (QString breakpoints) {
         {
             setNewHardwareBreakpointFlag(true);
             _gdbMonitor->setNewHardBreakpointFlag();
-            handleGdbInterruptSIGINT();
             editorManagerWidget->setEnableOpenFile(false);
+            handleGdbInterruptSIGINT();
             handleGdbCommand("-break-enable " + breakpoints);
             handleGdbGenericpointList();
             handleGdbContinue();
+            editorManagerWidget->setEnableOpenFile(true);                   // re-enable open file
         }
         else    // simply enable bp
         {
@@ -2430,11 +2461,12 @@ void SeerGdbWidget::handleGdbBreakpointDisable (QString breakpoints) {
         {
             setNewHardwareBreakpointFlag(true);
             _gdbMonitor->setNewHardBreakpointFlag();
-            handleGdbInterruptSIGINT();
             editorManagerWidget->setEnableOpenFile(false);
+            handleGdbInterruptSIGINT();
             handleGdbCommand("-break-disable " + breakpoints);
             handleGdbGenericpointList();
             handleGdbContinue();
+            editorManagerWidget->setEnableOpenFile(true);                   // re-enable open file
         }
         else    // simply disable bp
         {
@@ -2478,11 +2510,12 @@ void SeerGdbWidget::handleGdbBreakpointInsert (QString breakpoint) {
         {
             setNewHardwareBreakpointFlag(true);
             _gdbMonitor->setNewHardBreakpointFlag();
-            editorManagerWidget->setEnableOpenFile(false);                       // when add bp at runtime, seer display source code when receives SIGINT, so this will fix it
+            editorManagerWidget->setEnableOpenFile(false);                  // when add bp at runtime, seer display source code when receives SIGINT, so this will fix it
             handleGdbInterruptSIGINT();
             handleGdbCommand("-break-insert -h " + breakpoint);
             handleGdbGenericpointList();
             handleGdbContinue();
+            editorManagerWidget->setEnableOpenFile(true);                   // re-enable open file
         }
         else    // simply put -h breakpoint
         {
@@ -4647,6 +4680,16 @@ bool SeerGdbWidget::isDebugOnInit()
 {
     return _debugOnInitFlag;
 }
+
+void SeerGdbWidget::setSeekIdentifierFlag(bool flag)
+{
+    _seekingIndentifierFlag = flag;
+}
+
+bool SeerGdbWidget::isSeekIdentifier()
+{
+    return _seekingIndentifierFlag;
+}
 /***********************************************************************************************************************
  * slot                                                                                                                *
  **********************************************************************************************************************/
@@ -5018,9 +5061,43 @@ void SeerGdbWidget::handleSyncManualGdbCommand(QString expression)
     _debugOnInitOperationMutex.unlock();
 }
 
-void SeerGdbWidget::handleGdbReadVariable(QString expression)
+void SeerGdbWidget::handleSyncGdbFindVariableIdentifier(const QString& identifier)
 {
-    handleGdbCommand("-data-evaluate-expression \"" + expression + "\"");
+    _seekIdentifierMutex.lock();
+    emit requestSeekVariableIdentifier(identifier);
+    _seekIdentifierCv.wait(&_seekIdentifierMutex);
+    _seekIdentifierMutex.unlock();
+}
+
+void SeerGdbWidget::handleSyncGdbFindFunctionIdentifier (const QString& identifier)
+{
+    _seekIdentifierMutex.lock();
+    emit requestSeekFunctionIdentifier(identifier);
+    _seekIdentifierCv.wait(&_seekIdentifierMutex);
+    _seekIdentifierMutex.unlock();
+}
+
+void SeerGdbWidget::handleSyncGdbFindTypeIdentifier (const QString& identifier)
+{
+    _seekIdentifierMutex.lock();
+    emit requestSeekTypeIdentifier(identifier);
+    _seekIdentifierCv.wait(&_seekIdentifierMutex);
+    _seekIdentifierMutex.unlock();
+}
+
+void SeerGdbWidget::handleSyncSeekVariableIdentifier (const QString& identifier)
+{
+    handleGdbCommand("-symbol-info-functions " + identifier);
+}
+
+void SeerGdbWidget::handleSyncSeekFunctionIdentifier (const QString& identifier)
+{
+    handleGdbCommand("-symbol-info-variables " + identifier);
+}
+
+void SeerGdbWidget::handleSyncSeekTypeIdentifier (const QString& identifier)
+{
+    handleGdbCommand("-symbol-info-types " + identifier);
 }
 
 void SeerGdbWidget::handleSyncSendToSerial(QString path, QString expression)
@@ -5039,7 +5116,6 @@ void SeerGdbWidget::handleSendToSerial(QString path, QString expression)
     process.start("/bin/sh", QStringList() << "-c" << cmd);
     process.waitForFinished();
     QString output = process.readAllStandardOutput();
-    qDebug() << "ECho output: " << output.trimmed();
     _debugOnInitOperationCv.notify_one();
     _debugOnInitOperationMutex.unlock();
 }
@@ -5057,6 +5133,9 @@ void SeerGdbWidget::handleSyncRefreshSource()
  **********************************************************************************************************************/
 void SeerGdbWidget::handleSeekIdentifier(const QString& identifier)
 {
+    // Raise the flag
+    setSeekIdentifierFlag(true);
+    _Identifier = identifier;
     // Create a thread handling this
     _workerThread = QThread::create([this, identifier]() {
         traceIdentifierHandler(identifier);                     // Run your background logic here
@@ -5075,18 +5154,29 @@ void SeerGdbWidget::traceIdentifierHandler(const QString& identifier)
         // if target is running
         if (gdbMultiarchRunningState() == true)
         {
-            // check on SeerSourceBrowserWidget::handleText:108 QMap<QString,QString> files; if file is loaded
-            // empty QMap<QString,QString> files on void SeerSourceBrowserWidget::handleSessionTerminated
+            setNewHardwareBreakpointFlag(true);
+            editorManagerWidget->setEnableOpenFile(false);      // precent open file when signal is sent
+            handleSyncGdbInterruptSIGINT();                     // SIGINT      -> *stopped
+            handleSyncGdbFindVariableIdentifier(QString(" --name " + identifier));
+            handleSyncGdbFindFunctionIdentifier(QString(" --name " + identifier));
+            handleSyncGdbFindTypeIdentifier(QString(" --name " + identifier));
+            handleSyncGdbContinue();                        // -exec-continue -> *stopped,reason="breakpoint-hit"
+            editorManagerWidget->setEnableOpenFile(true);       // re-enable open file
         }
         else    // simply read symbol
         {
-            
+            handleSyncGdbFindVariableIdentifier(QString(" --name " + identifier));
+            handleSyncGdbFindFunctionIdentifier(QString(" --name " + identifier));
+            handleSyncGdbFindTypeIdentifier(QString(" --name " + identifier));
         }
     }
     else
-    {
-        // For desktop application
+    {   // For desktop application
+        handleSyncGdbFindVariableIdentifier(QString(" --name " + identifier));
+        handleSyncGdbFindFunctionIdentifier(QString(" --name " + identifier));
+        handleSyncGdbFindTypeIdentifier(QString(" --name " + identifier));
     }
+    setSeekIdentifierFlag(false);    // Lower the flag
 }
 
 /***********************************************************************************************************************

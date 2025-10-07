@@ -221,6 +221,9 @@ SeerMainWindow::SeerMainWindow(QWidget* parent) : QMainWindow(parent) {
     QObject::connect(gdbWidget,                         &SeerGdbWidget::requestBreakDisable,            gdbWidget,      &SeerGdbWidget::handleGdbBreakpointDisable);
     QObject::connect(gdbWidget,                         &SeerGdbWidget::requestGdbCommand,              gdbWidget,      &SeerGdbWidget::handleGdbCommand);
     QObject::connect(gdbWidget,                         &SeerGdbWidget::requestSendToSerial,            gdbWidget,      &SeerGdbWidget::handleSendToSerial);
+    QObject::connect(gdbWidget,                         &SeerGdbWidget::requestSeekVariableIdentifier,  gdbWidget,      &SeerGdbWidget::handleSyncSeekVariableIdentifier);
+    QObject::connect(gdbWidget,                         &SeerGdbWidget::requestSeekFunctionIdentifier,  gdbWidget,      &SeerGdbWidget::handleSyncSeekFunctionIdentifier);
+    QObject::connect(gdbWidget,                         &SeerGdbWidget::requestSeekTypeIdentifier,      gdbWidget,      &SeerGdbWidget::handleSyncSeekTypeIdentifier);
 
     handleRecordSettingsChanged();
 

@@ -293,7 +293,7 @@ const QString& SeerSourceBrowserWidget::findFileWithRegrex(const QString& expres
 {
     QMap<QString, QString>::const_iterator it;
     for (it = _files.constBegin(); it != _files.constEnd(); ++it) {
-        if (it.value().endsWith(expression)) {
+        if (it.key().contains(expression)) {
             return it.key();
         }
     }

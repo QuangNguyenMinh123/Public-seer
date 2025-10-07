@@ -254,6 +254,8 @@ class SeerGdbWidget : public QWidget, protected Ui::SeerGdbWidgetForm {
 
         // ::Symbol Files
         void                                setSymbolFiles                      (const QMap<QString, QString>& symbolFiles);
+        void                                setSeekIdentifierFlag               (bool flag);
+        bool                                isSeekIdentifier                    ();
 
         void                                setGdbMultiarchPid                  (int pid);
         void                                setNewHardwareBreakpointFlag        (bool flag);
@@ -277,8 +279,11 @@ class SeerGdbWidget : public QWidget, protected Ui::SeerGdbWidgetForm {
         void                                handleSyncSendToSerial              (QString path, QString expression);
         void                                handleSyncRefreshSource             ();
         // Handler for Sync function
-        void                                handleGdbReadVariable               (QString expression);
+        void                                handleSyncGdbFindVariableIdentifier (const QString& identifier);
+        void                                handleSyncGdbFindFunctionIdentifier (const QString& identifier);
+        void                                handleSyncGdbFindTypeIdentifier     (const QString& identifier);
         void                                handleSendToSerial                  (QString path, QString expression);
+        void                                handleSeekIdentifier                (const QString& identifier);
 
     public slots:
         void                                handleLogsTabMoved                  (int to, int from);
@@ -446,7 +451,9 @@ class SeerGdbWidget : public QWidget, protected Ui::SeerGdbWidgetForm {
         void                                handleOpenOCDStartFailed            ();
 
         // For handling tracing functions, variables and types
-        void                                handleSeekIdentifier                (const QString& identifier);
+        void                                handleSyncSeekVariableIdentifier    (const QString& identifier);
+        void                                handleSyncSeekFunctionIdentifier    (const QString& identifier);
+        void                                handleSyncSeekTypeIdentifier        (const QString& identifier);
 
         // Handling exception level changed
         void                                handleExceptionLevelChanged         (const QString& exceptionLevel);
@@ -470,6 +477,9 @@ class SeerGdbWidget : public QWidget, protected Ui::SeerGdbWidgetForm {
         void                                requestGdbCommand                   (QString expression);
         void                                requestSendToSerial                 (QString path, QString expression);
         void                                requestRefreshSource                ();
+        void                                requestSeekVariableIdentifier       (const QString& expression);
+        void                                requestSeekFunctionIdentifier       (const QString& expression);
+        void                                requestSeekTypeIdentifier           (const QString& expression);
 
     protected:
         void                                writeLogsSettings                   ();
@@ -580,6 +590,7 @@ class SeerGdbWidget : public QWidget, protected Ui::SeerGdbWidgetForm {
         bool                                _newHBreakFlag;
         bool                                _isTargetRunning;               // hold target state: running / halted
         bool                                _debugOnInitFlag;               // flag handling openocd debug on init
+        bool                                _seekingIndentifierFlag;        // flag for handling seek identifier
         bool                                _isStopAtTempFunc;
         QString                             _stopAtFunc;
         bool                                _isStopAtException;
@@ -614,6 +625,10 @@ class SeerGdbWidget : public QWidget, protected Ui::SeerGdbWidgetForm {
         bool                                _debugOnInitBpReadFlag;
         bool                                _debugOnInitTempBpFlag;
         bool                                _debugOnInitJustReadModuleDir;
+
+        QMutex                              _seekIdentifierMutex;
+        QWaitCondition                      _seekIdentifierCv;
+        QString                             _Identifier;
 
         // List of breakpoint previous status, used in Debug on Init
         QMap<QString,QString>               _mapListBpStatus;

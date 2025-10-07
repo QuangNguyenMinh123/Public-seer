@@ -426,8 +426,14 @@ const QString& SeerEditorManagerWidget::editorExternalEditorCommand () const {
 
 void SeerEditorManagerWidget::handleText (const QString& text) {
 
+    if (isOpenFileEnable() == false)
+    {
+        // By pass until isOpenFileEnable() is true
+        return;
+    }
     // Update the current line.
     if (text.startsWith("*stopped")) {
+        
 
         //qDebug() << ":stopped:" << text;
 
