@@ -5115,7 +5115,11 @@ void SeerGdbWidget::handleSendToSerial(QString path, QString expression)
     QString cmd = "echo \"" + expression + "\" > " + path;
     process.start("/bin/sh", QStringList() << "-c" << cmd);
     process.waitForFinished();
-    QString output = process.readAllStandardOutput();
+    QByteArray stdoutData = process.readAllStandardOutput();
+    QByteArray stderrData = process.readAllStandardError();
+    if (!stderrData.isEmpty()) {
+        QMessageBox::warning(this, "Seer", QString(stderrData + "\n Please run insmod/rmmod command manually!"), QMessageBox::Ok, QMessageBox::Ok);
+    }
     _debugOnInitOperationCv.notify_one();
     _debugOnInitOperationMutex.unlock();
 }

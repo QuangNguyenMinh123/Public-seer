@@ -54,4 +54,5 @@ class SeerOpenOCDWidget: public SeerLogWidget{
         QString                             _telnetPort;
         QString                             _exceptionLevel;
         QString                             _openOCDTarget;
+        bool                                _isFailed                      = false;
 };

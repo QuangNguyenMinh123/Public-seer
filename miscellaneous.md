@@ -130,3 +130,6 @@ COMMAND       PID    USER   FD   TYPE  DEVICE SIZE/OFF NODE NAME
 openocd   2953829 g703808    8u  IPv4 9597687      0t0  TCP *:3333 (LISTEN)
 openocd   2953829 g703808   11u  IPv4 9666948      0t0  TCP localhost:3333->localhost:41664 (ESTABLISHED)
 gdb-multi 2953831 g703808    9u  IPv4 9701167      0t0  TCP localhost:41664->localhost:3333 (ESTABLISHED)
+
+######
+SeerDebugDialogForm size: 1264 * 868
