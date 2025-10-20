@@ -4626,7 +4626,7 @@ void SeerGdbWidget::setDockerBuildFolderPath(const QString& path)
 }
 
 // ::Symbol Files
-void SeerGdbWidget::setSymbolFiles(const QMap<QString, QString>& symbolFiles)
+void SeerGdbWidget::setSymbolFiles(const QMap<QString, std::tuple<QString, bool, QString>>& symbolFiles)
 {
     _symbolFiles.clear();
     for (auto it = symbolFiles.constBegin(); it != symbolFiles.constEnd(); ++it) {
@@ -4783,8 +4783,15 @@ void SeerGdbWidget::handleGdbMultiarchOpenOCDExecutable()
         // Load the executable, if needed.
         if (newExecutableFlag() == true) {
             for (auto it = _symbolFiles.constBegin(); it != _symbolFiles.constEnd(); ++it) {
+                const auto &tuple = it.value();
+                const bool enableLoadAddress = std::get<1>(tuple);
+                const QString &loadAddress = std::get<2>(tuple);
                 QString loadSymbolCmd = "-file-exec-and-symbols " + it.key();
-                handleGdbCommand(loadSymbolCmd);
+                if (enableLoadAddress)
+                {
+                    loadSymbolCmd += " " + loadAddress;
+                }
+                handleGdbCommand(loadSymbolCmd);        // QuangNM13: check more
             }
             
             handleGdbExecutableSources();           // Load the program source files. gdb-multiarch keeps
@@ -4794,8 +4801,10 @@ void SeerGdbWidget::handleGdbMultiarchOpenOCDExecutable()
         }
 
         for (auto it = _symbolFiles.constBegin(); it != _symbolFiles.constEnd(); ++it) {
-            QString loadSourceCmd = "-environment-directory \"" + it.value() + "\"";
-            handleGdbCommand(loadSourceCmd);
+            const auto &tuple = it.value();
+            const QString &sourcePath = std::get<0>(tuple);
+            QString loadSourceCmd = "-environment-directory \"" + sourcePath + "\"";
+            handleGdbCommand(loadSourceCmd);             // QuangNM13: check more
         }
         // Set or reset some things.
         handleGdbAssemblyDisassemblyFlavor();   // Set the disassembly flavor to use.

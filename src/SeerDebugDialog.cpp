@@ -20,6 +20,7 @@
 #include <QFormLayout>
 #include <QLabel>
 #include <QHBoxLayout>
+#include <tuple>
 
 SeerDebugDialog::SeerDebugDialog (QWidget* parent) : QDialog(parent) {
 
@@ -749,9 +750,13 @@ void SeerDebugDialog::loadProject (const QString& filename, bool notify) {
         QJsonArray array = openocdModeJson["symbolFiles"].toArray();
         for (const QJsonValue &value : array) {
             QJsonObject obj = value.toObject();
-            QString symbol = obj["symbolFile"].toString();
-            QString source = obj["sourcePath"].toString();
-            _OpenOCDSymbolWidgetManager->addGroupBox(symbol, source);
+            QMap<QString, std::tuple<QString, bool, QString>> tmpSymbolFile;
+            tmpSymbolFile[obj["symbolFile"].toString()] = std::make_tuple(
+                obj["sourcePath"].toString(),
+                obj["enableLoadAddress"].toBool(),
+                obj["loadAddress"].toString()
+            );
+            _OpenOCDSymbolWidgetManager->addGroupBox(tmpSymbolFile);
         }
 
         setLaunchMode("openocd");
@@ -895,14 +900,19 @@ void SeerDebugDialog::handleSaveProjectToolButton () {
         modeJson["exceptionLevelComboBox"]      = exceptionLevelComboBox->currentText();
         modeJson["numberSymbolFile"]            = _OpenOCDSymbolWidgetManager->countSymbolFiles();
         QJsonArray symbolFileArray;
-        const QMap<QString, QString> symbolFiles = _OpenOCDSymbolWidgetManager->symbolFiles();
+        const QMap<QString, std::tuple<QString, bool, QString>> symbolFiles = _OpenOCDSymbolWidgetManager->symbolFiles();
 
         int index = 0;
         for (auto it = symbolFiles.constBegin(); it != symbolFiles.constEnd(); ++it, ++index) {
+            const auto &tuple = it.value();
             QJsonObject entry;
+            bool testing = false;
+            testing = std::get<1>(tuple);
             entry["index"] = index;
-            entry["symbolFile"] = it.key();
-            entry["sourcePath"] = it.value();
+            entry["symbolFile"]         = it.key();
+            entry["sourcePath"]         = std::get<0>(tuple);       // read Source code path
+            entry["enableLoadAddress"]  = std::get<1>(tuple);       // load address enabled
+            entry["loadAddress"]        = std::get<2>(tuple);       // load address
             symbolFileArray.append(entry);
         }
         modeJson["symbolFiles"] = symbolFileArray;
@@ -1234,7 +1244,7 @@ OpenOCDSymbolWidgetManager* SeerDebugDialog::symbolWidgetManager()
     return _OpenOCDSymbolWidgetManager;
 }
 
-void SeerDebugDialog::setSymbolFiles (const QMap<QString, QString>& symbolFiles)
+void SeerDebugDialog::setSymbolFiles (const QMap<QString, std::tuple<QString, bool, QString>>& symbolFiles)
 {
 
 }
@@ -1341,7 +1351,7 @@ OpenOCDSymbolFileWidget::OpenOCDSymbolFileWidget(QWidget *parent)
     auto *mainLayout = new QVBoxLayout(this);
     QFormLayout *formLayout = new QFormLayout;
 
-    // Row 1
+    // Row 1: Symbol file
     QWidget *rowWidget1 = new QWidget(this);
     QHBoxLayout *rowLayout1 = new QHBoxLayout(rowWidget1);
     rowLayout1->setContentsMargins(0, 0, 0, 0);
@@ -1355,7 +1365,7 @@ OpenOCDSymbolFileWidget::OpenOCDSymbolFileWidget(QWidget *parent)
     rowLayout1->addWidget(_symbolToolButton);
     formLayout->addRow(new QLabel("Symbol file"), rowWidget1);
 
-    // Row 2
+    // Row 2: Source code
     QWidget *rowWidget2 = new QWidget(this);
     QHBoxLayout *rowLayout2 = new QHBoxLayout(rowWidget2);
     rowLayout2->setContentsMargins(0, 0, 0, 0);
@@ -1369,10 +1379,25 @@ OpenOCDSymbolFileWidget::OpenOCDSymbolFileWidget(QWidget *parent)
     rowLayout2->addWidget(_sourceToolButton);
     formLayout->addRow(new QLabel("Source code"), rowWidget2);
 
+    // Row 3: Checkbox + LineEdit
+    QWidget *rowWidget3 = new QWidget(this);
+    QHBoxLayout *rowLayout3 = new QHBoxLayout(rowWidget3);
+    rowLayout3->setContentsMargins(0, 0, 0, 0);
+
+    _loadAddressCheckBox = new QCheckBox("Load address", this);
+    _loadAddressLineEdit = new QLineEdit(this);
+    _loadAddressLineEdit->setPlaceholderText("Enter value (Hex)");
+    _loadAddressLineEdit->setEnabled(false);
+
+    rowLayout3->addWidget(_loadAddressCheckBox);
+    rowLayout3->addWidget(_loadAddressLineEdit);
+    formLayout->addRow(rowWidget3);
+
     mainLayout->addLayout(formLayout);
 
-    connect(_symbolToolButton, &QPushButton::clicked,  this, &OpenOCDSymbolFileWidget::handleOpenOCDSymbolPathButtonClicked);
-    connect(_sourceToolButton, &QPushButton::clicked,  this, &OpenOCDSymbolFileWidget::handleOpenOCDDirPathButtonClicked);
+    connect(_symbolToolButton,      &QPushButton::clicked,  this, &OpenOCDSymbolFileWidget::handleOpenOCDSymbolPathButtonClicked);
+    connect(_sourceToolButton,      &QPushButton::clicked,  this, &OpenOCDSymbolFileWidget::handleOpenOCDDirPathButtonClicked);
+    connect(_loadAddressCheckBox,   &QCheckBox::clicked,    this, &OpenOCDSymbolFileWidget::handleOpenOCDLoadAddressCheckBoxClicked);
 }
 
 
@@ -1397,6 +1422,18 @@ void OpenOCDSymbolFileWidget::handleOpenOCDDirPathButtonClicked () {
     }
 }
 
+void OpenOCDSymbolFileWidget::handleOpenOCDLoadAddressCheckBoxClicked () {
+
+    if (_loadAddressCheckBox->isChecked())
+    {
+        _loadAddressLineEdit->setEnabled(true);
+    }
+    else
+    {
+        _loadAddressLineEdit->setEnabled(false);
+    }
+}
+
 const QString OpenOCDSymbolFileWidget::symbolPath () {
     return _symbolLineEdit->text();
 }
@@ -1415,6 +1452,32 @@ void OpenOCDSymbolFileWidget::setSourcePath (const QString& path) {
     _sourceLineEdit->setText(path);
 }
 
+bool OpenOCDSymbolFileWidget::isLoadAddressEnabled()
+{
+    if (_loadAddressCheckBox->isChecked())
+        return true;
+    else
+        return false;
+}
+
+void OpenOCDSymbolFileWidget::setEnableLoadAddress (bool enable)
+{
+    _loadAddressCheckBox->setChecked(enable);
+    if (enable)
+        _loadAddressLineEdit->setEnabled(true);
+    else
+        _loadAddressLineEdit->setEnabled(false);
+}
+
+const QString OpenOCDSymbolFileWidget::loadAddress()
+{
+    return _loadAddressLineEdit->text();
+}
+
+void OpenOCDSymbolFileWidget::setLoadAddress (const QString& address)
+{
+    _loadAddressLineEdit->setText(address);
+}
 /***********************************************************************************************************************
  * OpenOCD -> Symbol file widget manager, used for handling multiple symbol files                                      *
  **********************************************************************************************************************/
@@ -1470,21 +1533,39 @@ void OpenOCDSymbolWidgetManager::addEmptyGroupBox()
     _groupBoxes.append(box);
 }
 
-void OpenOCDSymbolWidgetManager::addGroupBox(const QString& symbolFile, const QString& sourceDir)
+void OpenOCDSymbolWidgetManager::addGroupBox(const QMap<QString, std::tuple<QString, bool, QString>> &box)
 {
-    OpenOCDSymbolFileWidget *lastBox = _groupBoxes.last();
-    if (lastBox->symbolPath() == "" && lastBox->sourcePath() == "")
-    {
-        lastBox->setSymbolPath(symbolFile);
-        lastBox->setSourcePath(sourceDir);
+    if (box.isEmpty())
         return;
+
+    // Extract key and tuple
+    const QString symbolFile = box.firstKey();
+    const auto &tuple = box.first();
+    const QString sourcePath = std::get<0>(tuple);
+    const bool enableLoadAddress = std::get<1>(tuple);
+    const QString loadAddress = std::get<2>(tuple);
+
+    // Reuse last box if it's empty
+    if (!_groupBoxes.isEmpty()) {
+        OpenOCDSymbolFileWidget *lastBox = _groupBoxes.last();
+        if (lastBox->symbolPath().isEmpty() && lastBox->sourcePath().isEmpty()) {
+            lastBox->setSymbolPath(symbolFile);
+            lastBox->setSourcePath(sourcePath);
+            lastBox->setEnableLoadAddress(enableLoadAddress);
+            lastBox->setLoadAddress(loadAddress);
+            return;
+        }
     }
-    OpenOCDSymbolFileWidget *box = new OpenOCDSymbolFileWidget(this);
-    // Form layout for labels + line edits
-    _scrollLayout->addWidget(box);
-    _groupBoxes.append(box);
-    box->setSymbolPath(symbolFile);
-    box->setSourcePath(sourceDir);
+
+    // Otherwise create new widget
+    OpenOCDSymbolFileWidget *widget = new OpenOCDSymbolFileWidget(this);
+    _scrollLayout->addWidget(widget);
+    _groupBoxes.append(widget);
+
+    widget->setSymbolPath(symbolFile);
+    widget->setSourcePath(sourcePath);
+    widget->setEnableLoadAddress(enableLoadAddress);
+    widget->setLoadAddress(loadAddress);
 }
 
 void OpenOCDSymbolWidgetManager::deleteGroupBox()
@@ -1502,18 +1583,27 @@ void OpenOCDSymbolWidgetManager::deleteGroupBox()
 }
 
 
-const QMap<QString, QString> OpenOCDSymbolWidgetManager::symbolFiles () {
+const QMap<QString, std::tuple<QString, bool, QString>> OpenOCDSymbolWidgetManager::symbolFiles()
+{
+    // clear previous entries
     _symbolFiles.clear();
+
     for (auto it = _groupBoxes.begin(); it != _groupBoxes.end(); ++it) {
         OpenOCDSymbolFileWidget *box = *it;
-        if (box->symbolPath() == "")
+
+        if (box->symbolPath().isEmpty() || box->sourcePath().isEmpty())
             continue;
-        if (box->sourcePath() == "")
-            continue;
-        _symbolFiles[box->symbolPath()] = box->sourcePath();
+
+        _symbolFiles.insert(
+            box->symbolPath(),
+            std::make_tuple(box->sourcePath(), box->isLoadAddressEnabled(), box->loadAddress()
+            )
+        );
     }
+
     return _symbolFiles;
 }
+
 
 int OpenOCDSymbolWidgetManager::countSymbolFiles() {
     return _groupBoxes.size();

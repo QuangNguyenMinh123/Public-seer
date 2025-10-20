@@ -104,7 +104,7 @@ class SeerMainWindow : public QMainWindow, protected Ui::SeerMainWindowForm {
         const QString                       dockerBuildFolderPath               ();
         void                                setDockerBuildFolderPath            (const QString& path);
         // ::Symbol Files
-        void                                setSymbolFiles                      (const QMap<QString, QString>& _symbolFiles);
+        void                                setSymbolFiles                      (const QMap<QString, std::tuple<QString, bool, QString>>& _symbolFiles);
 
     private slots:
         void                        handleFileDebug                         ();

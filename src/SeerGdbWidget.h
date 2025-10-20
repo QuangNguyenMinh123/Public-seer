@@ -18,6 +18,7 @@
 #include <QMutex>
 #include <QWaitCondition>
 #include <QMap>
+#include <tuple>
 
 #include "ui_SeerGdbWidget.h"
 
@@ -253,7 +254,7 @@ class SeerGdbWidget : public QWidget, protected Ui::SeerGdbWidgetForm {
         void                                setDockerBuildFolderPath            (const QString& path);
 
         // ::Symbol Files
-        void                                setSymbolFiles                      (const QMap<QString, QString>& symbolFiles);
+        void                                setSymbolFiles                      (const QMap<QString, std::tuple<QString, bool, QString>>& symbolFiles);
         void                                setSeekIdentifierFlag               (bool flag);
         bool                                isSeekIdentifier                    ();
 
@@ -585,7 +586,7 @@ class SeerGdbWidget : public QWidget, protected Ui::SeerGdbWidgetForm {
         QString                             _absoluteBuildPath;
         QString                             _dockerBuildPath;
         // Symbol Files
-        QMap<QString, QString>              _symbolFiles;
+        QMap<QString, std::tuple<QString, bool, QString>>              _symbolFiles;
         // gdb multiarch variables
         bool                                _newHBreakFlag;
         bool                                _isTargetRunning;               // hold target state: running / halted

@@ -4,6 +4,7 @@
 #include <QtWidgets/QButtonGroup>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
+#include <tuple>
 #include "ui_SeerDebugDialog.h"
 
 class OpenOCDSymbolWidgetManager;
@@ -112,7 +113,7 @@ class SeerDebugDialog : public QDialog, protected Ui::SeerDebugDialogForm {
         void                                setDockerBuildFolderPath            (const QString& path);
         // ::Symbol Files
         OpenOCDSymbolWidgetManager*         symbolWidgetManager                 ();
-        void                                setSymbolFiles                      (const QMap<QString, QString>& symbolFiles);
+        void                                setSymbolFiles                      (const QMap<QString, std::tuple<QString, bool, QString>>& symbolFiles);
 
     public slots:
         void                    handleExecutableNameToolButton                  ();
@@ -164,13 +165,17 @@ public:
     ~OpenOCDSymbolFileWidget ();
     const QString               symbolPath ();
     const QString               sourcePath ();
+    bool                        isLoadAddressEnabled ();
+    const QString               loadAddress ();
     void                        setSymbolPath (const QString& path);
     void                        setSourcePath (const QString& path);
-
+    void                        setEnableLoadAddress (bool enable);
+    void                        setLoadAddress (const QString& address);
 
 private slots:
     void                    handleOpenOCDSymbolPathButtonClicked ();
     void                    handleOpenOCDDirPathButtonClicked ();
+    void                    handleOpenOCDLoadAddressCheckBoxClicked ();
 
 private:
     QString                 _symbolPath;
@@ -179,6 +184,10 @@ private:
     QLineEdit*              _sourceLineEdit;
     QPushButton*            _symbolToolButton;
     QPushButton*            _sourceToolButton;
+    QCheckBox*              _loadAddressCheckBox;
+    QLineEdit*              _loadAddressLineEdit;
+    bool                    _isLoadAddressEnabled = false;
+    QString                 _loadAddress = "";
 };
 
 class OpenOCDSymbolWidgetManager : public QWidget{
@@ -188,10 +197,10 @@ public:
     explicit OpenOCDSymbolWidgetManager (QWidget* parent = nullptr);
     ~OpenOCDSymbolWidgetManager ();
 
-    const QMap<QString, QString>    symbolFiles ();
-    int                             countSymbolFiles ();
+    const QMap<QString, std::tuple<QString, bool, QString>>  symbolFiles ();
+    int                                     countSymbolFiles ();
     void setSymbolPath (const QString& symbol, const QString& source);
-    void                                    addGroupBox(const QString& symbolFile, const QString& sourceDir);
+    void                                    addGroupBox(const QMap<QString, std::tuple<QString, bool, QString>> &box);
 
 public slots:
     void                                    addEmptyGroupBox();
@@ -202,5 +211,5 @@ private:
     QWidget *                               _scrollWidget;
     QVBoxLayout *                           _scrollLayout;
     QList<OpenOCDSymbolFileWidget *>        _groupBoxes;
-    QMap<QString, QString>                  _symbolFiles;
+    QMap<QString, std::tuple<QString, bool, QString>> _symbolFiles;
 };

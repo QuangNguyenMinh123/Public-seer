@@ -2022,7 +2022,7 @@ void SeerMainWindow::setOpenOCDTarget (const QString& target)
 }
 
 // ::Symbol Files
-void SeerMainWindow::setSymbolFiles (const QMap<QString, QString>& _symbolFiles)
+void SeerMainWindow::setSymbolFiles (const QMap<QString, std::tuple<QString, bool, QString>>& _symbolFiles)
 {
     gdbWidget->setSymbolFiles(_symbolFiles);
 }
