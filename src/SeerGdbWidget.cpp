@@ -438,7 +438,7 @@ SeerGdbWidget::SeerGdbWidget (QWidget* parent) : QWidget(parent) {
     QObject::connect(helpToolButton,                                            &QToolButton::clicked,                                                                      this,                                                           &SeerGdbWidget::handleHelpToolButtonClicked);
 
     // openocd: if OpenOCD failed to start because the port is already in use, run handleOpenOCDStartFailed quangnm13: deploy later
-    // QObject::connect(SeerOpenOCDWidgetNp::getOpenOCDWidget(),                   &SeerOpenOCDWidget::SeerOpenOCDWidget::openocdStartFailed,                                  this,                                                           &SeerGdbWidget::handleOpenOCDStartFailed);
+    QObject::connect(openocdWidget,                                             &SeerOpenOCDWidget::openocdStartFailed,                                                     this,                                                           &SeerGdbWidget::handleOpenOCDStartFailed);
 #if ENABLE_GDB_LOGOUT == 1
     // For debuging
     QObject::connect(this,                                                      &SeerGdbWidget::allTextOutput,                                                              _gdbOutputLog,                                                  &SeerGdbLogWidget::handleText);
@@ -4794,7 +4794,7 @@ void SeerGdbWidget::handleGdbMultiarchOpenOCDExecutable()
         }
 
         for (auto it = _symbolFiles.constBegin(); it != _symbolFiles.constEnd(); ++it) {
-            QString loadSourceCmd = "-environment-cd \"" + it.value() + "\"";
+            QString loadSourceCmd = "-environment-directory \"" + it.value() + "\"";
             handleGdbCommand(loadSourceCmd);
         }
         // Set or reset some things.
@@ -4839,7 +4839,7 @@ void SeerGdbWidget::handleOpenOCDMainHelpButtonClicked()
 
 void SeerGdbWidget::handleOpenOCDStartFailed()
 {
-    logsTabWidget->setCurrentIndex(7); // Switch to openocd console tab
+    logsTabWidget->setCurrentIndex(9);          // Switch to openocd console tab
 }
 
 // Promtp a dialog, tell user to input kernel module that they want to debug
