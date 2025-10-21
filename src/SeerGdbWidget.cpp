@@ -4786,7 +4786,7 @@ void SeerGdbWidget::handleGdbMultiarchOpenOCDExecutable()
                 const auto &tuple = it.value();
                 const bool enableLoadAddress = std::get<1>(tuple);
                 const QString &loadAddress = std::get<2>(tuple);
-                QString loadSymbolCmd = "-file-exec-and-symbols " + it.key();
+                QString loadSymbolCmd = "add-symbol-file " + it.key();
                 if (enableLoadAddress)
                 {
                     loadSymbolCmd += " " + loadAddress;
