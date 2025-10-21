@@ -4626,6 +4626,11 @@ void SeerGdbWidget::setDockerBuildFolderPath(const QString& path)
 }
 
 // ::Symbol Files
+const QMap<QString, std::tuple<QString, bool, QString>> SeerGdbWidget::symbolFiles(void)
+{
+    return _symbolFiles;
+}
+
 void SeerGdbWidget::setSymbolFiles(const QMap<QString, std::tuple<QString, bool, QString>>& symbolFiles)
 {
     _symbolFiles.clear();

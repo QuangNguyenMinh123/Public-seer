@@ -1533,6 +1533,11 @@ void OpenOCDSymbolWidgetManager::addEmptyGroupBox()
     _groupBoxes.append(box);
 }
 
+void OpenOCDSymbolWidgetManager::setSymbolFiles (QMap<QString, std::tuple<QString, bool, QString>> symbolFiles)
+{
+    
+}
+
 void OpenOCDSymbolWidgetManager::addGroupBox(const QMap<QString, std::tuple<QString, bool, QString>> &box)
 {
     if (box.isEmpty())

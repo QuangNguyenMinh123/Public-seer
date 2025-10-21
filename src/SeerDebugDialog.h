@@ -199,7 +199,7 @@ public:
 
     const QMap<QString, std::tuple<QString, bool, QString>>  symbolFiles ();
     int                                     countSymbolFiles ();
-    void setSymbolPath (const QString& symbol, const QString& source);
+    void setSymbolFiles (QMap<QString, std::tuple<QString, bool, QString>> symbolFiles);
     void                                    addGroupBox(const QMap<QString, std::tuple<QString, bool, QString>> &box);
 
 public slots:

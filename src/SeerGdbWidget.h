@@ -255,6 +255,7 @@ class SeerGdbWidget : public QWidget, protected Ui::SeerGdbWidgetForm {
 
         // ::Symbol Files
         void                                setSymbolFiles                      (const QMap<QString, std::tuple<QString, bool, QString>>& symbolFiles);
+        const QMap<QString, std::tuple<QString, bool, QString>>     symbolFiles (void);
         void                                setSeekIdentifierFlag               (bool flag);
         bool                                isSeekIdentifier                    ();
 

@@ -623,6 +623,22 @@ void SeerMainWindow::handleFileDebug () {
     dlg.setPreGdbCommands(executablePreGdbCommands());
     dlg.setPostGdbCommands(executablePostGdbCommands());
     dlg.setProjectFilename(projectFilename());
+    // OpenOcd
+    dlg.setOpenOCDExePath(openOCDExePath());
+    dlg.setOpenOCDCommand(openOCDCommand());
+    dlg.gdbMultiarchExePath(gdbMultiarchExePath());
+    dlg.setGdbPort(gdbPort());
+    dlg.setTelnetPort(telnetPort());
+    dlg.setGdbMultiarchCommand(gdbMultiarchCommand());
+    dlg.setBuiltInDocker(isBuiltInDocker());
+    dlg.setAbsoluteBuildFolderPath(absoluteBuildFolderPath());
+    dlg.setDockerBuildFolderPath(dockerBuildFolderPath());
+    dlg.setGdbMultiarchStopAtTempFunc(isGdbMultiarchIsStopAtTempFunc());
+    dlg.setGdbMultiarchStopAtFunc(gdbMultiarchStopAtFunc());
+    dlg.setGdbMultiarchStopAtExeption(isGdbMultiarchStopAtException());
+    dlg.setGdbMultiarchExeptionLevelToStop(gdbMultiarchExeptionLevelToStop());
+    dlg.setOpenOCDTarget(openOCDTarget());
+    dlg.symbolWidgetManager()->symbolFiles();
 
     setProjectFilename(""); // Clear project name here. No need to have it anymore.
 
@@ -2022,6 +2038,11 @@ void SeerMainWindow::setOpenOCDTarget (const QString& target)
 }
 
 // ::Symbol Files
+const QMap<QString, std::tuple<QString, bool, QString>> SeerMainWindow::symbolFiles (void)
+{
+    gdbWidget->symbolFiles();
+}
+
 void SeerMainWindow::setSymbolFiles (const QMap<QString, std::tuple<QString, bool, QString>>& _symbolFiles)
 {
     gdbWidget->setSymbolFiles(_symbolFiles);
