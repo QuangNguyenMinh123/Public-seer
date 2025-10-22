@@ -626,7 +626,7 @@ void SeerMainWindow::handleFileDebug () {
     // OpenOcd
     dlg.setOpenOCDExePath(openOCDExePath());
     dlg.setOpenOCDCommand(openOCDCommand());
-    dlg.gdbMultiarchExePath(gdbMultiarchExePath());
+    dlg.setGdbMultiarchExePath(gdbMultiarchExePath());
     dlg.setGdbPort(gdbPort());
     dlg.setTelnetPort(telnetPort());
     dlg.setGdbMultiarchCommand(gdbMultiarchCommand());
@@ -638,7 +638,7 @@ void SeerMainWindow::handleFileDebug () {
     dlg.setGdbMultiarchStopAtExeption(isGdbMultiarchStopAtException());
     dlg.setGdbMultiarchExeptionLevelToStop(gdbMultiarchExeptionLevelToStop());
     dlg.setOpenOCDTarget(openOCDTarget());
-    dlg.symbolWidgetManager()->symbolFiles();
+    dlg.setSymbolFiles(symbolFiles());
 
     setProjectFilename(""); // Clear project name here. No need to have it anymore.
 
@@ -2040,7 +2040,7 @@ void SeerMainWindow::setOpenOCDTarget (const QString& target)
 // ::Symbol Files
 const QMap<QString, std::tuple<QString, bool, QString>> SeerMainWindow::symbolFiles (void)
 {
-    gdbWidget->symbolFiles();
+    return gdbWidget->symbolFiles();
 }
 
 void SeerMainWindow::setSymbolFiles (const QMap<QString, std::tuple<QString, bool, QString>>& _symbolFiles)

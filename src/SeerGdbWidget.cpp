@@ -437,7 +437,7 @@ SeerGdbWidget::SeerGdbWidget (QWidget* parent) : QWidget(parent) {
     QObject::connect(breakpointsSaveToolButton,                                 &QToolButton::clicked,                                                                      this,                                                           &SeerGdbWidget::handleGdbSaveBreakpoints);
     QObject::connect(helpToolButton,                                            &QToolButton::clicked,                                                                      this,                                                           &SeerGdbWidget::handleHelpToolButtonClicked);
 
-    // openocd: if OpenOCD failed to start because the port is already in use, run handleOpenOCDStartFailed quangnm13: deploy later
+    // openocd: if OpenOCD failed to start because the port is already in use, run handleOpenOCDStartFailed
     QObject::connect(openocdWidget,                                             &SeerOpenOCDWidget::openocdStartFailed,                                                     this,                                                           &SeerGdbWidget::handleOpenOCDStartFailed);
 #if ENABLE_GDB_LOGOUT == 1
     // For debuging
@@ -4738,7 +4738,7 @@ void SeerGdbWidget::handleGdbMultiarchOpenOCDExecutable()
         setNewExecutableFlag(true);
 
         // Disconnect from the terminal and delete the old gdb if there is a new executable.
-        // quangnm13: is this really needed?
+        // Is this really needed? -> Comment out
         // if (newExecutableFlag() == true) {
         //     console()->deleteTerminal();
         //     killGdb();
@@ -4796,7 +4796,7 @@ void SeerGdbWidget::handleGdbMultiarchOpenOCDExecutable()
                 {
                     loadSymbolCmd += " " + loadAddress;
                 }
-                handleGdbCommand(loadSymbolCmd);        // QuangNM13: check more
+                handleGdbCommand(loadSymbolCmd);
             }
             
             handleGdbExecutableSources();           // Load the program source files. gdb-multiarch keeps
@@ -4809,7 +4809,7 @@ void SeerGdbWidget::handleGdbMultiarchOpenOCDExecutable()
             const auto &tuple = it.value();
             const QString &sourcePath = std::get<0>(tuple);
             QString loadSourceCmd = "-environment-directory \"" + sourcePath + "\"";
-            handleGdbCommand(loadSourceCmd);             // QuangNM13: check more
+            handleGdbCommand(loadSourceCmd);
         }
         // Set or reset some things.
         handleGdbAssemblyDisassemblyFlavor();   // Set the disassembly flavor to use.

@@ -1172,6 +1172,7 @@ bool SeerDebugDialog::isGdbMultiarchIsStopAtTempFunc () {
 
 void SeerDebugDialog::setGdbMultiarchStopAtTempFunc (bool check) {
     tempFuncCheckBox->setChecked(check);
+    handleOpenOCDTempFuncCheckBoxClicked();
 }
 
 const QString SeerDebugDialog::gdbMultiarchStopAtFunc () {
@@ -1188,6 +1189,7 @@ bool SeerDebugDialog::isGdbMultiarchStopAtException() {
 
 void SeerDebugDialog::setGdbMultiarchStopAtExeption (bool check) {
     stopExceptionLebelCheckBox->setChecked(check);
+    handleOpenOCDStopExceptionLebelCheckBoxClicked();
 }
 
 const QString SeerDebugDialog::gdbMultiarchExeptionLevelToStop() {
@@ -1216,6 +1218,7 @@ bool SeerDebugDialog::isBuiltInDocker()
 void SeerDebugDialog::setBuiltInDocker(bool check)
 {
     dockerCheckBox->setChecked(check);
+    handleOpenOCDDockerCheckboxClicked();
 }
 
 const QString SeerDebugDialog::absoluteBuildFolderPath()
@@ -1246,7 +1249,7 @@ OpenOCDSymbolWidgetManager* SeerDebugDialog::symbolWidgetManager()
 
 void SeerDebugDialog::setSymbolFiles (const QMap<QString, std::tuple<QString, bool, QString>>& symbolFiles)
 {
-
+    symbolWidgetManager()->addGroupBox(symbolFiles);
 }
 /***********************************************************************************************************************
  * OpenOCD Slots                                                                                                       *
@@ -1533,44 +1536,42 @@ void OpenOCDSymbolWidgetManager::addEmptyGroupBox()
     _groupBoxes.append(box);
 }
 
-void OpenOCDSymbolWidgetManager::setSymbolFiles (QMap<QString, std::tuple<QString, bool, QString>> symbolFiles)
-{
-    
-}
-
 void OpenOCDSymbolWidgetManager::addGroupBox(const QMap<QString, std::tuple<QString, bool, QString>> &box)
 {
     if (box.isEmpty())
         return;
 
-    // Extract key and tuple
-    const QString symbolFile = box.firstKey();
-    const auto &tuple = box.first();
-    const QString sourcePath = std::get<0>(tuple);
-    const bool enableLoadAddress = std::get<1>(tuple);
-    const QString loadAddress = std::get<2>(tuple);
+    for (auto it = box.constBegin(); it != box.constEnd(); ++it)
+    {
+        // Extract key and tuple
+        const QString &symbolFile       = it.key();
+        const auto &tuple               = it.value();
+        const QString sourcePath        = std::get<0>(tuple);
+        const bool enableLoadAddress    = std::get<1>(tuple);
+        const QString loadAddress       = std::get<2>(tuple);
 
-    // Reuse last box if it's empty
-    if (!_groupBoxes.isEmpty()) {
-        OpenOCDSymbolFileWidget *lastBox = _groupBoxes.last();
-        if (lastBox->symbolPath().isEmpty() && lastBox->sourcePath().isEmpty()) {
-            lastBox->setSymbolPath(symbolFile);
-            lastBox->setSourcePath(sourcePath);
-            lastBox->setEnableLoadAddress(enableLoadAddress);
-            lastBox->setLoadAddress(loadAddress);
-            return;
+        // Reuse last box if it's empty
+        if (!_groupBoxes.isEmpty()) {
+            OpenOCDSymbolFileWidget *lastBox = _groupBoxes.last();
+            if (lastBox->symbolPath().isEmpty() && lastBox->sourcePath().isEmpty()) {
+                lastBox->setSymbolPath(symbolFile);
+                lastBox->setSourcePath(sourcePath);
+                lastBox->setEnableLoadAddress(enableLoadAddress);
+                lastBox->setLoadAddress(loadAddress);
+                continue;
+            }
         }
+
+        // Otherwise create new widget
+        OpenOCDSymbolFileWidget *widget = new OpenOCDSymbolFileWidget(this);
+        _scrollLayout->addWidget(widget);
+        _groupBoxes.append(widget);
+
+        widget->setSymbolPath(symbolFile);
+        widget->setSourcePath(sourcePath);
+        widget->setEnableLoadAddress(enableLoadAddress);
+        widget->setLoadAddress(loadAddress);
     }
-
-    // Otherwise create new widget
-    OpenOCDSymbolFileWidget *widget = new OpenOCDSymbolFileWidget(this);
-    _scrollLayout->addWidget(widget);
-    _groupBoxes.append(widget);
-
-    widget->setSymbolPath(symbolFile);
-    widget->setSourcePath(sourcePath);
-    widget->setEnableLoadAddress(enableLoadAddress);
-    widget->setLoadAddress(loadAddress);
 }
 
 void OpenOCDSymbolWidgetManager::deleteGroupBox()
@@ -1580,6 +1581,8 @@ void OpenOCDSymbolWidgetManager::deleteGroupBox()
     {
         lastBox->setSymbolPath("");
         lastBox->setSourcePath("");
+        lastBox->setEnableLoadAddress(false);
+        lastBox->setLoadAddress("");
         return;
     }
     OpenOCDSymbolFileWidget *takelastBox = _groupBoxes.takeLast();
