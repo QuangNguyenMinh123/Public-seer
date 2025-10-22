@@ -2116,6 +2116,7 @@ void SeerMainWindow::createExceptionLevelBar()
     _exceptionComboBox->addItems({"EL1H", "EL3H", "N-EL1H", "N-EL2H", "EL1H / EL3H", "N-EL1H / N-EL2H", "off"});
 
     _exceptionComboBox->setEnabled(true);
+    _exceptionComboBox->setCurrentText("off");
     // Add widgets to layout
     groupLayout->addWidget(_exceptionButton);
     groupLayout->addWidget(_exceptionComboBox);

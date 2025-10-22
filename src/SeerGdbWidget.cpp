@@ -1138,7 +1138,8 @@ void SeerGdbWidget::handleText (const QString& text) {
 
                     QString line_text = Seer::parseFirst(symbol_entry, "line=", '"', '"', false);
                     QString name_text = Seer::parseFirst(symbol_entry, "name=", '"', '"', false);
-
+                    int pos = name_text.indexOf(QRegularExpression("[^a-zA-Z0-9]"));
+                    name_text = (pos != -1) ? name_text.left(pos) : name_text;
                     if (name_text == _Identifier)           // you found it! signal to open file
                     {
                         editorManagerWidget->setEnableOpenFile(true);       // raise this flag to allow opening file

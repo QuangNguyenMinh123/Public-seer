@@ -2,10 +2,11 @@
 #include <QtCore/QtCore>
 #include <QtCore/QProcess>
 #include <QMessageBox>
+#include <QStringLiteral>
 /***********************************************************************************************************************
- * Constructor & Destructor                                                                                           *
+ * Constructor & Destructor                                                                                            *
  **********************************************************************************************************************/
-SeerOpenOCDWidget::SeerOpenOCDWidget (QWidget* parent) {
+SeerOpenOCDWidget::SeerOpenOCDWidget (QWidget* parent) : SeerLogWidget(parent) {
     Q_UNUSED(parent);
     _openocdProcess = new QProcess(this);
     _telnetProcess = new QProcess(this);
@@ -92,6 +93,8 @@ bool SeerOpenOCDWidget::startTelnet (const QString &port)
 {
     if (_telnetProcess->state() == QProcess::NotRunning) {
         _telnetProcess->start("telnet", {"localhost", port});
+        QByteArray stdoutData = _telnetProcess->readAllStandardOutput();
+        QByteArray stderrData = _telnetProcess->readAllStandardError();
         return true;
     }
     return false;
@@ -122,6 +125,19 @@ bool SeerOpenOCDWidget::isTelnetRunning ()
 qint64 SeerOpenOCDWidget::telnetExecuteCmd(const QString& cmd)
 {
     qint64 bytesWritten = _telnetProcess->write((cmd + "\n").toUtf8());
+    if (!_telnetProcess->waitForBytesWritten(1000)) {
+        QMessageBox::warning(this, "Seer", QString("Failed to send telnet command."), QMessageBox::Ok, QMessageBox::Ok);
+        return 0;
+    }
+    QByteArray stdoutData = _telnetProcess->readAllStandardOutput();
+    QByteArray stderrData = _telnetProcess->readAllStandardError();
+    if (_firstTelnetCmd == true)
+    {
+        _firstTelnetCmd = false;
+        telnetExecuteCmd(cmd);          // call it again
+        return bytesWritten;
+    }
+    QMessageBox::information(this, QString("Seer Telnet Port " + _telnetPort), QString("Telnet output: " + stdoutData + stderrData));
     return bytesWritten;
 }
 /***********************************************************************************************************************
@@ -193,7 +209,7 @@ void SeerOpenOCDWidget::handleReadError ()
         if (_isFailed == true)
             return;
         _isFailed = true;
-        killOpenOCD();
+        // killOpenOCD();
         emit openocdStartFailed();
         QMessageBox::warning(this, "Seer", "OpenOCD failed to start. \nCheck openOCD output for details.", QMessageBox::Ok);
     }
