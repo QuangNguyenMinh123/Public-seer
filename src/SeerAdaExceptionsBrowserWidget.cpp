@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2021 Ernie Pasveer <epasveer@att.net>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "SeerAdaExceptionsBrowserWidget.h"
 #include "SeerCatchpointCreateDialog.h"
 #include "SeerUtl.h"
@@ -84,7 +88,7 @@ void SeerAdaExceptionsBrowserWidget::handleText (const QString& text) {
 
     adaExceptionsSearchLineEdit->clear();
 
-    QApplication::setOverrideCursor(Qt::ArrowCursor);
+    QApplication::restoreOverrideCursor();
 }
 
 void SeerAdaExceptionsBrowserWidget::handleSessionTerminated () {

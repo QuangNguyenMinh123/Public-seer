@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2021 Ernie Pasveer <epasveer@att.net>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "SeerCatchpointsBrowserWidget.h"
 #include "SeerCatchpointCreateDialog.h"
 #include "SeerUtl.h"
@@ -250,7 +254,7 @@ void SeerCatchpointsBrowserWidget::handleText (const QString& text) {
   //catchpointsTreeWidget->resizeColumnToContents(11);
     catchpointsTreeWidget->resizeColumnToContents(12);
 
-    QApplication::setOverrideCursor(Qt::ArrowCursor);
+    QApplication::restoreOverrideCursor();
 }
 
 void SeerCatchpointsBrowserWidget::handleStoppingPointReached () {

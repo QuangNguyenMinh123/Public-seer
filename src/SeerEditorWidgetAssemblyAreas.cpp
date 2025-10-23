@@ -352,7 +352,7 @@ void SeerEditorWidgetAssemblyArea::updateTextArea () {
     setCurrentLine(_currentAddress);
 
     // Set the cursor back.
-    QApplication::setOverrideCursor(Qt::ArrowCursor);
+    QApplication::restoreOverrideCursor();
 }
 
 void SeerEditorWidgetAssemblyArea::updateMarginAreasWidth (int newBlockCount) {

@@ -1,8 +1,6 @@
-cmake_minimum_required(VERSION 3.21.0)
+cmake_minimum_required(VERSION 3.5.0)
 
-project(seergdb VERSION 2.6.0 LANGUAGES CXX)
-set(QT_VERSION_MAJOR 6)
-set(QT_REQUIRED_VERSION 6.6)
+project(seergdb VERSION 2.7.0 LANGUAGES CXX)
 
 set(PROJECT_NAME seergdb)
 
@@ -37,7 +35,7 @@ if(${QTVERSION} STREQUAL "QT6")
     find_package(Qt6 COMPONENTS REQUIRED OpenGL)
     find_package(Qt6 COMPONENTS REQUIRED SerialPort)
 
-    set(CMAKE_CXX_STANDARD 20)
+    set(CMAKE_CXX_STANDARD 17)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
     set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -48,7 +46,7 @@ elseif(${QTVERSION} STREQUAL "QT5")
     find_package(Qt5 COMPONENTS REQUIRED PrintSupport)
     find_package(Qt5 COMPONENTS REQUIRED Charts)
 
-    set(CMAKE_CXX_STANDARD 20)
+    set(CMAKE_CXX_STANDARD 11)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
     set(CMAKE_CXX_EXTENSIONS OFF)
 endif()
@@ -144,7 +142,10 @@ set(HEADER_FILES
     SeerVariableTrackerBrowserWidget.h
     SeerWatchpointCreateDialog.h
     SeerWatchpointsBrowserWidget.h
+    SeerSourceHighlighter.h
     SeerCppSourceHighlighter.h
+    SeerOdinSourceHighlighter.h
+    SeerRustSourceHighlighter.h
     SeerAboutDialog.h
     SeerSlashProcDialog.h
     SeerHighlighterSettings.h
@@ -248,7 +249,10 @@ set(SOURCE_FILES
     SeerVariableTrackerBrowserWidget.cpp
     SeerWatchpointCreateDialog.cpp
     SeerWatchpointsBrowserWidget.cpp
+    SeerSourceHighlighter.cpp
     SeerCppSourceHighlighter.cpp
+    SeerOdinSourceHighlighter.cpp
+    SeerRustSourceHighlighter.cpp
     SeerAboutDialog.cpp
     SeerSlashProcDialog.cpp
     SeerHighlighterSettings.cpp

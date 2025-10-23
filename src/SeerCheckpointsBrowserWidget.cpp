@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2021 Ernie Pasveer <epasveer@att.net>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "SeerCheckpointsBrowserWidget.h"
 #include "SeerUtl.h"
 #include <QtWidgets/QTreeWidget>
@@ -87,7 +91,7 @@ void SeerCheckpointsBrowserWidget::handleText (const QString& text) {
     checkpointsTreeWidget->resizeColumnToContents(3);
     checkpointsTreeWidget->resizeColumnToContents(4);
 
-    QApplication::setOverrideCursor(Qt::ArrowCursor);
+    QApplication::restoreOverrideCursor();
 }
 
 void SeerCheckpointsBrowserWidget::handleStoppingPointReached () {

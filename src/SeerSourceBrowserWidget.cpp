@@ -156,7 +156,7 @@ void SeerSourceBrowserWidget::handleText (const QString& text) {
 
     sourceSearchLineEdit->clear();
 
-    QApplication::setOverrideCursor(Qt::ArrowCursor);
+    QApplication::restoreOverrideCursor();
 }
 
 void SeerSourceBrowserWidget::handleSessionTerminated () {

@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2021 Ernie Pasveer <epasveer@att.net>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "SeerAdaTasksBrowserWidget.h"
 #include "SeerUtl.h"
 #include <QtWidgets/QTreeWidget>
@@ -148,7 +152,7 @@ void SeerAdaTasksBrowserWidget::handleText (const QString& text) {
     adaTaskTreeWidget->resizeColumnToContents(6);
     adaTaskTreeWidget->resizeColumnToContents(7);
 
-    QApplication::setOverrideCursor(Qt::ArrowCursor);
+    QApplication::restoreOverrideCursor();
 }
 
 void SeerAdaTasksBrowserWidget::handleStoppingPointReached () {

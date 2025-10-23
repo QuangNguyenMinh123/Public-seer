@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2021 Ernie Pasveer <epasveer@att.net>
+//
+// SPDX-License-Identifier: MIT
+
 #include "QProcessInfoWidget.h"
 #include "QProcessInfo.h"
 #include <QtWidgets/QTreeWidget>
@@ -158,7 +162,7 @@ void QProcessInfoWidget::refreshList () {
 
     refreshView();
 
-    QApplication::setOverrideCursor(Qt::ArrowCursor);
+    QApplication::restoreOverrideCursor();
 }
 
 void QProcessInfoWidget::refreshView () {

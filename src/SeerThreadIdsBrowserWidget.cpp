@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2021 Ernie Pasveer <epasveer@att.net>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "SeerThreadIdsBrowserWidget.h"
 #include "SeerUtl.h"
 #include <QtWidgets/QTreeWidget>
@@ -103,7 +107,7 @@ void SeerThreadIdsBrowserWidget::handleText (const QString& text) {
     idsTreeWidget->resizeColumnToContents(0);
     idsTreeWidget->resizeColumnToContents(1);
 
-    QApplication::setOverrideCursor(Qt::ArrowCursor);
+    QApplication::restoreOverrideCursor();
 }
 
 void SeerThreadIdsBrowserWidget::handleStoppingPointReached () {

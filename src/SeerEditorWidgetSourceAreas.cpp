@@ -552,10 +552,10 @@ void SeerEditorWidgetSourceArea::openText (const QString& text, const QString& f
         delete _sourceHighlighter; _sourceHighlighter = 0;
     }
 
-    QRegularExpression cpp_re("(?:" + _sourceHighlighterSettings.sourceSuffixes() + ")$");
-    if (file.contains(cpp_re)) {
-        _sourceHighlighter = new SeerCppSourceHighlighter(0);
-
+    _file = file;
+    SeerSourceHighlighter* highlighter = SeerSourceHighlighter::getSourceHighlighter(_file, _sourceHighlighterSettings);
+    if (highlighter) {
+        _sourceHighlighter = highlighter;
         if (highlighterEnabled()) {
             _sourceHighlighter->setDocument(document());
         }else{
@@ -1244,7 +1244,7 @@ void SeerEditorWidgetSourceArea::showContextMenu (const QPoint& pos, const QPoin
         bool f = process->waitForStarted(5000);
 
         // Set the cursor back.
-        QApplication::setOverrideCursor(Qt::ArrowCursor);
+        QApplication::restoreOverrideCursor();
 
         if (f == false) {
             QMessageBox::critical(this, "Error!",  "Launching external editor failed.\n\nCommand: '" + codeEditorCmd + "'");

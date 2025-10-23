@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2021 Ernie Pasveer <epasveer@att.net>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "SeerVariableLoggerBrowserWidget.h"
 #include "SeerUtl.h"
 #include <QtWidgets/QTreeWidget>
@@ -57,6 +61,12 @@ void SeerVariableLoggerBrowserWidget::handleText (const QString& text) {
                 break;
             }
 
+            // If with brackets (a structure), filter out excess '\n'
+            // in case pretty-print-on is used.
+            if (value_text.front() == '{' && value_text.back() == '}') {
+                value_text = Seer::filterBareNewLines(value_text);
+            }
+
             QList<QTreeWidgetItem*> matches = variablesTreeWidget->findItems(id_text, Qt::MatchExactly, 3);
 
             if (matches.size() > 0) {
@@ -113,7 +123,7 @@ void SeerVariableLoggerBrowserWidget::handleText (const QString& text) {
     }
 
     // Set the cursor back.
-    QApplication::setOverrideCursor(Qt::ArrowCursor);
+    QApplication::restoreOverrideCursor();
 }
 
 void SeerVariableLoggerBrowserWidget::handleSessionTerminated () {
@@ -318,8 +328,11 @@ void SeerVariableLoggerBrowserWidget::handleContextMenu (const QPoint& pos) {
     structVisualizerMenu.addAction(addStructAmpersandVisualizerAction);
     menu.addMenu(&structVisualizerMenu);
 
-    QAction* copyAction    = menu.addAction("Copy selected");
-    QAction* copyAllAction = menu.addAction("Copy all");
+    QAction* deleteAction    = menu.addAction("Delete selected");
+    QAction* deleteAllAction = menu.addAction("Delete all");
+
+    QAction* copyAction      = menu.addAction("Copy selected");
+    QAction* copyAllAction   = menu.addAction("Copy all");
 
     QString actionText;
     if (item != 0) {
@@ -351,12 +364,13 @@ void SeerVariableLoggerBrowserWidget::handleContextMenu (const QPoint& pos) {
     addStructAmpersandVisualizerAction->setText(QString("\"&&%1\"").arg(actionText));
 
 
-    // If no selected item, disable everything but allow 'copyall'.
+    // If no selected item, disable everything but allow 'copyall' and 'deleteall'.
     if (item == 0) {
         memoryVisualizerMenu.setEnabled(false);
         arrayVisualizerMenu.setEnabled(false);
         matrixVisualizerMenu.setEnabled(false);
         structVisualizerMenu.setEnabled(false);
+        deleteAction->setEnabled(false);
         copyAction->setEnabled(false);
     }
 
@@ -367,7 +381,15 @@ void SeerVariableLoggerBrowserWidget::handleContextMenu (const QPoint& pos) {
         return;
     }
 
-    if (action == copyAction || action == copyAction) {
+    if (action == deleteAction) {
+        handleDeleteToolButton();
+    }
+
+    if (action == deleteAllAction) {
+        handleDeleteAllToolButton();
+    }
+
+    if (action == copyAction || action == copyAllAction) {
         // Get selected tree items.
         QList<QTreeWidgetItem*> items;
 

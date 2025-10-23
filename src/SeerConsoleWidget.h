@@ -74,3 +74,4 @@ class SeerConsoleWidget : public QWidget, protected Ui::SeerConsoleWidgetForm {
         bool                _enableStdout;
         bool                _enableWrap;
 };
+

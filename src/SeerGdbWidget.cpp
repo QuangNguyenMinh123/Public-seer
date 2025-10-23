@@ -1376,7 +1376,7 @@ void SeerGdbWidget::handleGdbRunExecutable (const QString& breakMode, bool loadS
         break;
     }
 
-    QApplication::setOverrideCursor(Qt::ArrowCursor);
+    QApplication::restoreOverrideCursor();
 
     qCDebug(LC) << "Finishing 'gdb run/start'.";
 }
@@ -1478,7 +1478,7 @@ void SeerGdbWidget::handleGdbAttachExecutable (bool loadSessionBreakpoints) {
         break;
     }
 
-    QApplication::setOverrideCursor(Qt::ArrowCursor);
+    QApplication::restoreOverrideCursor();
 
     qCDebug(LC) << "Finishing 'gdb attach'.";
 }
@@ -1577,7 +1577,7 @@ void SeerGdbWidget::handleGdbConnectExecutable (bool loadSessionBreakpoints) {
         break;
     }
 
-    QApplication::setOverrideCursor(Qt::ArrowCursor);
+    QApplication::restoreOverrideCursor();
 
     qCDebug(LC) << "Finishing 'gdb connect'.";
 }
@@ -1686,7 +1686,7 @@ void SeerGdbWidget::handleGdbRRExecutable (bool loadSessionBreakpoints) {
         break;
     }
 
-    QApplication::setOverrideCursor(Qt::ArrowCursor);
+    QApplication::restoreOverrideCursor();
 
     qCDebug(LC) << "Finishing 'gdb rr'.";
 }
@@ -1777,7 +1777,7 @@ void SeerGdbWidget::handleGdbCoreFileExecutable () {
         break;
     }
 
-    QApplication::setOverrideCursor(Qt::ArrowCursor);
+    QApplication::restoreOverrideCursor();
 
     qCDebug(LC) << "Finishing 'gdb corefile'.";
 }
@@ -2175,7 +2175,7 @@ void SeerGdbWidget::handleGdbExecutableFunctions (int id, const QString& functio
 
     QApplication::setOverrideCursor(Qt::BusyCursor);
     handleGdbCommand(QString("%1-symbol-info-functions --include-nondebug --name %2").arg(id).arg(functionRegex));
-    QApplication::setOverrideCursor(Qt::ArrowCursor);
+    QApplication::restoreOverrideCursor();
 }
 
 void SeerGdbWidget::handleGdbExecutableTypes (int id, const QString& typeRegex) {
