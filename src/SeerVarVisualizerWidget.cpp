@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2021 Ernie Pasveer <epasveer@att.net>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "SeerVarVisualizerWidget.h"
 #include "SeerHelpPageDialog.h"
 #include "SeerUtl.h"
@@ -873,7 +877,6 @@ void SeerVarVisualizerWidget::handleHelpButton () {
 
     SeerHelpPageDialog* help = new SeerHelpPageDialog;
     help->loadFile(":/seer/resources/help/StructVisualizer.md");
-    help->setWindowFlags(help->windowFlags() | Qt::WindowStaysOnTopHint);
     help->show();
     help->raise();
 }

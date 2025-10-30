@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2021 Ernie Pasveer <epasveer@att.net>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "SeerVariableManagerWidget.h"
 #include "SeerHelpPageDialog.h"
 #include "QHContainerWidget.h"
@@ -77,7 +81,6 @@ void SeerVariableManagerWidget::handleHelpToolButtonClicked () {
 
     SeerHelpPageDialog* help = new SeerHelpPageDialog;
     help->loadFile(":/seer/resources/help/VariableRegisterInfoBrowser.md");
-    help->setWindowFlags(help->windowFlags() | Qt::WindowStaysOnTopHint);
     help->show();
     help->raise();
 }

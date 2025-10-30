@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2021 Ernie Pasveer <epasveer@att.net>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "SeerStackDumpBrowserWidget.h"
 #include "SeerStackDumpSettingsDialog.h"
 #include "SeerUtl.h"
@@ -154,7 +158,7 @@ void SeerStackDumpBrowserWidget::handleText (const QString& text) {
     stackTableWidget->resizeColumnToContents(4);
     stackTableWidget->resizeRowsToContents();
 
-    QApplication::setOverrideCursor(Qt::ArrowCursor);
+    QApplication::restoreOverrideCursor();
 }
 
 void SeerStackDumpBrowserWidget::handleStoppingPointReached () {

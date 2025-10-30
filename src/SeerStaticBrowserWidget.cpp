@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2021 Ernie Pasveer <epasveer@att.net>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "SeerStaticBrowserWidget.h"
 #include "SeerUtl.h"
 #include <QtWidgets/QTreeWidget>
@@ -134,7 +138,7 @@ void SeerStaticBrowserWidget::handleText (const QString& text) {
     staticTreeWidget->sortByColumn(0, Qt::AscendingOrder);
     staticTreeWidget->setSortingEnabled(true);
 
-    QApplication::setOverrideCursor(Qt::ArrowCursor);
+    QApplication::restoreOverrideCursor();
 }
 
 void SeerStaticBrowserWidget::handleSessionTerminated () {

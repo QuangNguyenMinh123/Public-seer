@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2021 Ernie Pasveer <epasveer@att.net>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "SeerFunctionBrowserWidget.h"
 #include "SeerBreakpointCreateDialog.h"
 #include "SeerUtl.h"
@@ -170,7 +174,7 @@ void SeerFunctionBrowserWidget::handleText (const QString& text) {
     functionTreeWidget->sortByColumn(0, Qt::AscendingOrder);
     functionTreeWidget->setSortingEnabled(true);
 
-    QApplication::setOverrideCursor(Qt::ArrowCursor);
+    QApplication::restoreOverrideCursor();
 }
 
 void SeerFunctionBrowserWidget::handleSessionTerminated () {

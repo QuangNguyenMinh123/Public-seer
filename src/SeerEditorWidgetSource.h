@@ -1,6 +1,10 @@
+// SPDX-FileCopyrightText: 2021 Ernie Pasveer <epasveer@att.net>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #pragma once
 
-#include "SeerCppSourceHighlighter.h"
+#include "SeerSourceHighlighter.h"
 #include "SeerKeySettings.h"
 #include "SeerPlainTextEdit.h"
 #include <QShortcut>
@@ -16,8 +20,6 @@
 #include <QtCore/QMap>
 #include <QtCore/QFileSystemWatcher>
 #include <QtCore/QPoint>
-
-// QuangNM13: add trace function/variable/type feature
 #include <QMouseEvent>
 #include <QKeyEvent>
 
@@ -57,6 +59,10 @@ class SeerEditorWidgetSourceArea : public SeerPlainTextEdit {
         QString                                     findFile                            (const QString& file, const QString& fullname, const QString& alternateDirectory, const QStringList& alternateDirectories);
 
         void                                        setCurrentLine                      (int lineno);
+        void                                        setCurrentColumn                    (int colno);
+        int                                         currentLine                         () const;
+        int                                         currentColumn                       () const;
+        int                                         firstDisplayLine                    () const;
         void                                        scrollToLine                        (int lineno);
 
         void                                        clearCurrentLines                   ();
@@ -74,6 +80,7 @@ class SeerEditorWidgetSourceArea : public SeerPlainTextEdit {
         const QVector<bool>&                        breakpointEnableds                  () const;
         int                                         breakpointLineToNumber              (int lineno) const;
         bool                                        breakpointLineEnabled               (int lineno) const;
+        void                                        breakpointToggle                    ();
 
         void                                        showContextMenu                     (QMouseEvent* event);
         void                                        showContextMenu                     (QContextMenuEvent* event);
@@ -124,6 +131,7 @@ class SeerEditorWidgetSourceArea : public SeerPlainTextEdit {
         void                                        handleHighlighterSettingsChanged    ();
         void                                        handleWatchFileModified             (const QString& path);
         void                                        handleBreakpointToolTip             (QPoint pos, const QString& text);
+
     protected:
         void                                        resizeEvent                         (QResizeEvent* event);
         void                                        contextMenuEvent                    (QContextMenuEvent* event);
@@ -173,7 +181,7 @@ class SeerEditorWidgetSourceArea : public SeerPlainTextEdit {
         SeerEditorWidgetSourceLineNumberArea*       _lineNumberArea;
         SeerEditorWidgetSourceBreakPointArea*       _breakPointArea;
 
-        SeerCppSourceHighlighter*                   _sourceHighlighter;
+        SeerSourceHighlighter*                      _sourceHighlighter;
         SeerHighlighterSettings                     _sourceHighlighterSettings;
         bool                                        _sourceHighlighterEnabled;
 
@@ -244,6 +252,7 @@ class SeerEditorWidgetSource : public QWidget, protected Ui::SeerEditorWidgetSou
 
     public slots:
         void                                        showSearchBar                           (bool flag);
+        void                                        showSearchBar                           (bool flag, QString field);
         void                                        setSearchMatchCase                      (bool flag);
         void                                        showAlternateBar                        (bool flag);
         void                                        showReloadBar                           (bool flag);
@@ -258,9 +267,12 @@ class SeerEditorWidgetSource : public QWidget, protected Ui::SeerEditorWidgetSou
         void                                        handleAlternateFileOpenToolButton       ();
         void                                        handleAlternateLineEdit                 ();
         void                                        handleTextSearchShortcut                ();
+        void                                        handleLineSearchShortcut                ();
         void                                        handleAlternateDirectoryShortcut        ();
+        void                                        handleToggleBreakpointShortcut          ();
         void                                        handleReloadToolButton                  ();
         void                                        handleReloadCloseToolButton             ();
+        void                                        handleEscapePressed                     ();
 
     signals:
         void                                        addAlternateDirectory                   (QString path);
@@ -271,6 +283,8 @@ class SeerEditorWidgetSource : public QWidget, protected Ui::SeerEditorWidgetSou
         QShortcut*                                  _textSearchNextShortcut;
         QShortcut*                                  _textSearchPrevShortcut;
         QShortcut*                                  _textSearchReloadShortcut;
+        QShortcut*                                  _lineSearchShortcut;
         QShortcut*                                  _alternateDirShortcut;
+        QShortcut*                                  _toggleBreakpointShortcut;
 };
 

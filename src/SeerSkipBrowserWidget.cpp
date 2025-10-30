@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2021 Ernie Pasveer <epasveer@att.net>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "SeerSkipBrowserWidget.h"
 #include "SeerSkipCreateDialog.h"
 #include "SeerUtl.h"
@@ -87,7 +91,7 @@ void SeerSkipBrowserWidget::handleText (const QString& text) {
     skipTreeWidget->resizeColumnToContents(4);
     skipTreeWidget->resizeColumnToContents(5);
 
-    QApplication::setOverrideCursor(Qt::ArrowCursor);
+    QApplication::restoreOverrideCursor();
 }
 
 void SeerSkipBrowserWidget::handleSessionTerminated () {

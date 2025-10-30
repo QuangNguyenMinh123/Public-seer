@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2021 Ernie Pasveer <epasveer@att.net>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "SeerVariableTrackerBrowserWidget.h"
 #include "SeerUtl.h"
 #include <QtWidgets/QTreeWidget>
@@ -138,6 +142,12 @@ void SeerVariableTrackerBrowserWidget::handleText (const QString& text) {
             QString id_text    = text.section('^', 0,0);
             QString value_text = Seer::parseFirst(text, "value=", '"', '"', false);
 
+            // If with brackets (a structure), filter out excess '\n'
+            // in case pretty-print-on is used.
+            if (value_text.front() == '{' && value_text.back() == '}') {
+                value_text = Seer::filterBareNewLines(value_text);
+            }
+
             // Find the ones that match our 'id'.
             QList<QTreeWidgetItem*> matches = variablesTreeWidget->findItems(id_text, Qt::MatchExactly, 2);
 
@@ -203,7 +213,7 @@ void SeerVariableTrackerBrowserWidget::handleText (const QString& text) {
         break;
     }
 
-    QApplication::setOverrideCursor(Qt::ArrowCursor);
+    QApplication::restoreOverrideCursor();
 }
 
 void SeerVariableTrackerBrowserWidget::handleStoppingPointReached () {
@@ -220,6 +230,9 @@ void SeerVariableTrackerBrowserWidget::handleSessionTerminated () {
 
     // Delete previous contents.
     variablesTreeWidget->clear();
+
+    // Tell the GdbWidget to forget all tracked expressions.
+    emit deleteVariableExpressions("*");
 }
 
 void SeerVariableTrackerBrowserWidget::refresh () {
@@ -457,6 +470,9 @@ void SeerVariableTrackerBrowserWidget::handleContextMenu (const QPoint& pos) {
     structVisualizerMenu.addAction(addStructAmpersandVisualizerAction);
     menu.addMenu(&structVisualizerMenu);
 
+    QAction* deleteAction    = menu.addAction("Delete selected");
+    QAction* deleteAllAction = menu.addAction("Delete all");
+
     QAction* copyAction    = menu.addAction("Copy selected");
     QAction* copyAllAction = menu.addAction("Copy all");
 
@@ -489,12 +505,13 @@ void SeerVariableTrackerBrowserWidget::handleContextMenu (const QPoint& pos) {
     addStructAsteriskVisualizerAction->setText(QString("\"*%1\"").arg(actionText));
     addStructAmpersandVisualizerAction->setText(QString("\"&&%1\"").arg(actionText));
 
-    // If no selected item, disable everything but allow 'copyall'.
+    // If no selected item, disable everything but allow 'copyall' and 'deleteall'.
     if (item == 0) {
         memoryVisualizerMenu.setEnabled(false);
         arrayVisualizerMenu.setEnabled(false);
         matrixVisualizerMenu.setEnabled(false);
         structVisualizerMenu.setEnabled(false);
+        deleteAction->setEnabled(false);
         copyAction->setEnabled(false);
     }
 
@@ -505,7 +522,15 @@ void SeerVariableTrackerBrowserWidget::handleContextMenu (const QPoint& pos) {
         return;
     }
 
-    if (action == copyAction || action == copyAction) {
+    if (action == deleteAction) {
+        handleDeleteToolButton();
+    }
+
+    if (action == deleteAllAction) {
+        handleDeleteAllToolButton();
+    }
+
+    if (action == copyAction || action == copyAllAction) {
         // Get selected tree items.
         QList<QTreeWidgetItem*> items;
 

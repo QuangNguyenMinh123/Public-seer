@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2021 Ernie Pasveer <epasveer@att.net>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #pragma once
 
 #include "SeerEditorWidgetAssembly.h"
@@ -9,10 +13,26 @@
 #include <QtCore/QMap>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
-
+#include <stack>
+#include <QList>
+#include <QTimer>
 #include "ui_SeerEditorManagerWidget.h"
 
 class SeerEditorManagerWidget : public QWidget, protected Ui::SeerEditorManagerWidgetForm {
+    struct SeerCurrentFile {
+        QString                   file;
+        QString                   fullname;
+        int                       line;             // line to set the cursor to
+        int                       column;           // column to set the cursor to
+        int                       firstDisplayLine;      // line to display at top
+        bool operator==(const SeerCurrentFile& other) const {
+            return file == other.file &&
+                fullname == other.fullname &&
+                line == other.line &&
+                column == other.column &&
+                firstDisplayLine == other.firstDisplayLine;
+        }
+    };
 
     Q_OBJECT
 
@@ -46,7 +66,6 @@ class SeerEditorManagerWidget : public QWidget, protected Ui::SeerEditorManagerW
         void                                            setAssemblyShowSourceLines          (bool flag);
         bool                                            assemblyShowSourceLines             () const;
 
-
         SeerEditorManagerFiles                          openedFiles                         () const;
 
         void                                            setEditorFont                       (const QFont& font);
@@ -65,6 +84,7 @@ class SeerEditorManagerWidget : public QWidget, protected Ui::SeerEditorManagerW
         int                                             editorTabSize                       () const;
         void                                            setEditorExternalEditorCommand      (const QString& externalEditorCommand);
         const QString&                                  editorExternalEditorCommand         () const;
+        void                                            clearFilesStack                     ();
 
     public slots:
         void                                            handleText                          (const QString& text);
@@ -95,6 +115,11 @@ class SeerEditorManagerWidget : public QWidget, protected Ui::SeerEditorManagerW
         void                                            handleSessionTerminated             ();
         void                                            setEnableOpenFile                   (bool state);
         bool                                            isOpenFileEnable                    ();
+        void                                            handleOpenRecentlyClosedFile        ();
+        void                                            onScroll                            ();
+    
+    protected:
+        void                                            mousePressEvent                     (QMouseEvent *event) override;
 
     private slots:
         void                                            handleFileOpenToolButtonClicked     ();
@@ -137,7 +162,8 @@ class SeerEditorManagerWidget : public QWidget, protected Ui::SeerEditorManagerW
         void                                            deleteEditorWidgetTab               (int index);
         SeerEditorWidgetAssembly*                       createAssemblyWidgetTab             ();
         void                                            deleteAssemblyWidgetTab             ();
-
+        void                                            onTimerTimeout                      ();
+        
         SeerEditorManagerEntries                        _entries;
         SeerHighlighterSettings                         _editorHighlighterSettings;
         bool                                            _editorHighlighterEnabled;
@@ -157,5 +183,10 @@ class SeerEditorManagerWidget : public QWidget, protected Ui::SeerEditorManagerW
         bool                                            _notifyAssemblyTabShown;
         QStringList                                     _lastFrameList;         // variable for saving previous backtrace
         bool                                            _enableOpenFile;        // This variable temporarily disable handleOpenFile
+        // Variable for deploy forward/backward and re-open feature (mimics vscode)
+        QTimer*                                         _timer;                     // timer to deply forward/backward
+        std::stack<SeerCurrentFile>                     _stackClosedFiles;          // list of recently closed files (Ctrl + Shift + T)
+        QList<SeerCurrentFile>                          _listForwardFiles;          // list of opened files with its cursor position
+        SeerCurrentFile*                                _forwardQueuePointer = &_listForwardFiles[0];
 };
 

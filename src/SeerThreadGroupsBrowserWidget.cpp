@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2021 Ernie Pasveer <epasveer@att.net>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "SeerThreadGroupsBrowserWidget.h"
 #include "SeerUtl.h"
 #include <QtWidgets/QTreeWidget>
@@ -113,7 +117,7 @@ void SeerThreadGroupsBrowserWidget::handleText (const QString& text) {
   //groupTreeWidget->resizeColumnToContents(3); // Don't resize.
     groupTreeWidget->resizeColumnToContents(4);
 
-    QApplication::setOverrideCursor(Qt::ArrowCursor);
+    QApplication::restoreOverrideCursor();
 }
 
 void SeerThreadGroupsBrowserWidget::handleSessionTerminated () {

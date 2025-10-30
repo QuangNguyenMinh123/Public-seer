@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2021 Ernie Pasveer <epasveer@att.net>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "SeerEditorWidgetAssembly.h"
 #include "SeerPlainTextEdit.h"
 #include "SeerBreakpointCreateDialog.h"
@@ -352,7 +356,7 @@ void SeerEditorWidgetAssemblyArea::updateTextArea () {
     setCurrentLine(_currentAddress);
 
     // Set the cursor back.
-    QApplication::setOverrideCursor(Qt::ArrowCursor);
+    QApplication::restoreOverrideCursor();
 }
 
 void SeerEditorWidgetAssemblyArea::updateMarginAreasWidth (int newBlockCount) {
@@ -1067,6 +1071,36 @@ bool SeerEditorWidgetAssemblyArea::breakpointAddressEnabled (const QString& addr
 
     // Otherwise, return the proper status.
     return _breakpointsEnableds[i];
+}
+
+void SeerEditorWidgetAssemblyArea::breakpointToggle () {
+
+    // Get current lineno.
+    int lineno = textCursor().blockNumber() + 1;
+
+    QString address = _lineAddressMap[lineno];
+
+    if (address == "") {
+        return;
+    }
+
+    // If there is a breakpoint on the line, toggle it.
+    if (hasBreakpointAddress(address)) {
+
+        // Toggle the breakpoint.
+        // Enable if disabled. Disable if enabled.
+        if (breakpointAddressEnabled(address) == false) {
+            // Emit the enable breakpoint signal.
+            emit enableBreakpoints(QString("%1").arg(breakpointAddressToNumber(address)));
+        }else{
+            // Emit the disable breakpoint signal.
+            emit deleteBreakpoints(QString("%1").arg(breakpointAddressToNumber(address)));
+        }
+
+    // Otherwise, do a quick create of a new breakpoint.
+    }else{
+        emit insertBreakpoint(QString("-f *%1").arg(address));
+    }
 }
 
 void SeerEditorWidgetAssemblyArea::showContextMenu (QMouseEvent* event) {

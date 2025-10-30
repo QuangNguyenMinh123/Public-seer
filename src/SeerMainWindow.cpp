@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2021 Ernie Pasveer <epasveer@att.net>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "SeerMainWindow.h"
 #include "SeerDebugDialog.h"
 #include "SeerConfigDialog.h"
@@ -224,6 +228,12 @@ SeerMainWindow::SeerMainWindow(QWidget* parent) : QMainWindow(parent) {
     QObject::connect(gdbWidget,                         &SeerGdbWidget::requestSeekVariableIdentifier,  gdbWidget,      &SeerGdbWidget::handleSyncSeekVariableIdentifier);
     QObject::connect(gdbWidget,                         &SeerGdbWidget::requestSeekFunctionIdentifier,  gdbWidget,      &SeerGdbWidget::handleSyncSeekFunctionIdentifier);
     QObject::connect(gdbWidget,                         &SeerGdbWidget::requestSeekTypeIdentifier,      gdbWidget,      &SeerGdbWidget::handleSyncSeekTypeIdentifier);
+    QObject::connect(gdbWidget,                         &SeerGdbWidget::requestLsmod,                   gdbWidget,      &SeerGdbWidget::handleGdbLsmod);
+    QObject::connect(gdbWidget,                         &SeerGdbWidget::requestWarning,                 gdbWidget,      &SeerGdbWidget::handleSyncWarning);
+
+    // Add combination shortcut for re-open closed file (Ctrl + Shift + T)
+    QShortcut *shortcut = new QShortcut(QKeySequence("Ctrl+Shift+T"), this);
+    QObject::connect(shortcut,              &QShortcut::activated,                                      gdbWidget->editorManager(),   &SeerEditorManagerWidget::handleOpenRecentlyClosedFile);
 
     handleRecordSettingsChanged();
 
@@ -244,7 +254,7 @@ SeerMainWindow::SeerMainWindow(QWidget* parent) : QMainWindow(parent) {
 }
 
 SeerMainWindow::~SeerMainWindow() {
-    handleTerminateExecutable();                    // QuangNM13: see if this could fix segmantation fault on exit.
+    handleTerminateExecutable();                    // see if this could fix segmantation fault on exit.
 }
 
 void SeerMainWindow::setExecutableName (const QString& executableName) {
@@ -633,10 +643,6 @@ void SeerMainWindow::handleFileDebug () {
     dlg.setBuiltInDocker(isBuiltInDocker());
     dlg.setAbsoluteBuildFolderPath(absoluteBuildFolderPath());
     dlg.setDockerBuildFolderPath(dockerBuildFolderPath());
-    dlg.setGdbMultiarchStopAtTempFunc(isGdbMultiarchIsStopAtTempFunc());
-    dlg.setGdbMultiarchStopAtFunc(gdbMultiarchStopAtFunc());
-    dlg.setGdbMultiarchStopAtExeption(isGdbMultiarchStopAtException());
-    dlg.setGdbMultiarchExeptionLevelToStop(gdbMultiarchExeptionLevelToStop());
     dlg.setOpenOCDTarget(openOCDTarget());
     dlg.setSymbolFiles(symbolFiles());
 
@@ -684,10 +690,6 @@ void SeerMainWindow::handleFileDebug () {
     setBuiltInDocker(dlg.isBuiltInDocker());
     setAbsoluteBuildFolderPath(dlg.absoluteBuildFolderPath());
     setDockerBuildFolderPath(dlg.dockerBuildFolderPath());
-    setGdbMultiarchStopAtTempFunc(dlg.isGdbMultiarchIsStopAtTempFunc());
-    setGdbMultiarchStopAtFunc(dlg.gdbMultiarchStopAtFunc());
-    setGdbMultiarchStopAtExeption(dlg.isGdbMultiarchStopAtException());
-    setGdbMultiarchExeptionLevelToStop(dlg.gdbMultiarchExeptionLevelToStop());
     setOpenOCDTarget(dlg.openOCDTarget());
     setSymbolFiles(dlg.symbolWidgetManager()->symbolFiles());
 
@@ -910,7 +912,6 @@ void SeerMainWindow::handleTerminateExecutable () {
     gdbWidget->handleGdbTerminateExecutable();
     gdbWidget->setExecutableLaunchMode("");
     handleGdbStateChanged();
-    QApplication::setOverrideCursor(Qt::ArrowCursor);
     _runStatus->handleTerminate();
     menuOpenOCD->menuAction()->setVisible(false);
     actionOpenOCDAttach->setVisible(false);
@@ -1657,7 +1658,9 @@ void SeerMainWindow::writeConfigSettings () {
                 } settings.endGroup();
             }
 
-            settings.setValue("suffixes", highlighter.sourceSuffixes());
+            settings.setValue("cppsuffixes",  highlighter.cppSourceSuffixes());
+            settings.setValue("odinsuffixes", highlighter.odinSourceSuffixes());
+            settings.setValue("rustsuffixes", highlighter.rustSourceSuffixes());
         } settings.endGroup();
 
     } settings.endGroup();
@@ -1756,9 +1759,9 @@ void SeerMainWindow::readConfigSettings () {
                 } settings.endGroup();
             }
 
-            if (settings.contains("suffixes")) {
-                highlighter.setSourceSuffixes(settings.value("suffixes").toString());
-            }
+            if (settings.contains("cppsuffixes"))  highlighter.setCppSourceSuffixes(settings.value("cppsuffixes").toString());
+            if (settings.contains("odinsuffixes")) highlighter.setOdinSourceSuffixes(settings.value("odinsuffixes").toString());
+            if (settings.contains("rustsuffixes")) highlighter.setRustSourceSuffixes(settings.value("rustsuffixes").toString());
 
             gdbWidget->editorManager()->setEditorHighlighterSettings(highlighter);
 
@@ -1962,38 +1965,6 @@ const QString& SeerMainWindow::gdbMultiarchCommand () {
 
 void SeerMainWindow::setGdbMultiarchCommand (const QString& command) {
     gdbWidget->setGdbMultiarchCommand(command);
-}
-
-bool SeerMainWindow::isGdbMultiarchIsStopAtTempFunc () {
-    return gdbWidget->isGdbMultiarchIsStopAtTempFunc();
-}
-
-void SeerMainWindow::setGdbMultiarchStopAtTempFunc (bool check) {
-    gdbWidget->setGdbMultiarchStopAtTempFunc(check);
-}
-
-const QString SeerMainWindow::gdbMultiarchStopAtFunc () {
-    return gdbWidget->gdbMultiarchStopAtFunc();
-}
-
-void SeerMainWindow::setGdbMultiarchStopAtFunc (const QString& func) {
-    gdbWidget->setGdbMultiarchStopAtFunc(func);
-}
-
-bool SeerMainWindow::isGdbMultiarchStopAtException () {
-    return gdbWidget->isGdbMultiarchStopAtException();
-}
-
-void SeerMainWindow::setGdbMultiarchStopAtExeption (bool check) {
-    gdbWidget->setGdbMultiarchStopAtExeption(check);
-}
-
-const QString SeerMainWindow::gdbMultiarchExeptionLevelToStop() {
-    return gdbWidget->gdbMultiarchExeptionLevelToStop();
-}
-
-void SeerMainWindow::setGdbMultiarchExeptionLevelToStop (const QString& level) {
-    gdbWidget->setGdbMultiarchExeptionLevelToStop(level);
 }
 
 /// ::Docker

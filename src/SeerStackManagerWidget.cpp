@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2021 Ernie Pasveer <epasveer@att.net>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "SeerStackManagerWidget.h"
 #include "SeerHelpPageDialog.h"
 #include "SeerUtl.h"
@@ -86,7 +90,6 @@ void SeerStackManagerWidget::handleHelpToolButtonClicked () {
 
     SeerHelpPageDialog* help = new SeerHelpPageDialog;
     help->loadFile(":/seer/resources/help/StackInfoBrowser.md");
-    help->setWindowFlags(help->windowFlags() | Qt::WindowStaysOnTopHint);
     help->show();
     help->raise();
 }
@@ -216,7 +219,7 @@ void SeerStackManagerWidget::handleText (const QString& text) {
         // Ignore others.
     }
 
-    QApplication::setOverrideCursor(Qt::ArrowCursor);
+    QApplication::restoreOverrideCursor();
 }
 
 void SeerStackManagerWidget::handleSessionTerminated () {

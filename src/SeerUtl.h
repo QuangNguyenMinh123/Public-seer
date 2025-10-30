@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2021 Ernie Pasveer <epasveer@att.net>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #pragma once
 #include "QStringPair.h"
 #include <QtCore/QString>
@@ -9,6 +13,7 @@ namespace Seer {
 
     QString                     version             ();
 
+    QString                     filterBareNewLines  (const QString& str);
     QString                     filterEscapes       (const QString& str);
     QStringList                 filterEscapes       (const QStringList& strings);
     QString                     expandTabs          (const QString& str, int tabwidth, bool morph);

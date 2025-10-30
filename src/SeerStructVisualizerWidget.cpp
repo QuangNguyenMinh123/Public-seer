@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2021 Ernie Pasveer <epasveer@att.net>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "SeerStructVisualizerWidget.h"
 #include "SeerHelpPageDialog.h"
 #include "SeerUtl.h"
@@ -149,7 +153,7 @@ void SeerStructVisualizerWidget::handleText (const QString& text) {
     variableTreeWidget->resizeColumnToContents(1);
 
     // Set the cursor back.
-    QApplication::setOverrideCursor(Qt::ArrowCursor);
+    QApplication::restoreOverrideCursor();
 }
 
 void SeerStructVisualizerWidget::handleItemCreate (QTreeWidgetItem* parentItem, const QString& value_text) {
@@ -483,7 +487,6 @@ void SeerStructVisualizerWidget::handleHelpButton () {
 
     SeerHelpPageDialog* help = new SeerHelpPageDialog;
     help->loadFile(":/seer/resources/help/BasicStructVisualizer.md");
-    help->setWindowFlags(help->windowFlags() | Qt::WindowStaysOnTopHint);
     help->show();
     help->raise();
 }

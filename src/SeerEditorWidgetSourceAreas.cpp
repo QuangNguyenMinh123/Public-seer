@@ -1,7 +1,13 @@
+// SPDX-FileCopyrightText: 2021 Ernie Pasveer <epasveer@att.net>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "SeerEditorWidgetSource.h"
+#include "SeerHighlighterSettings.h"
 #include "SeerPlainTextEdit.h"
 #include "SeerBreakpointCreateDialog.h"
 #include "SeerPrintpointCreateDialog.h"
+#include "SeerSourceHighlighter.h"
 #include "SeerUtl.h"
 #include <QtGui/QColor>
 #include <QtGui/QPainter>
@@ -76,6 +82,7 @@ SeerEditorWidgetSourceArea::SeerEditorWidgetSourceArea(QWidget* parent) : SeerPl
     _breakPointArea->installEventFilter(breakPointAreaWheelForwarder);
 
     setMouseTracking(true);
+    setCursorWidth(2);          // make cursor a little bit bigger
 
     // Calling close() will clear the text document.
     close();
@@ -547,15 +554,15 @@ void SeerEditorWidgetSourceArea::openText (const QString& text, const QString& f
     cursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor, 1);
     setTextCursor(cursor);
 
-    // Add a syntax highlighter for C++ files.
+    // Add a syntax highlighter.
     if (_sourceHighlighter) {
         delete _sourceHighlighter; _sourceHighlighter = 0;
     }
 
-    QRegularExpression cpp_re("(?:" + _sourceHighlighterSettings.sourceSuffixes() + ")$");
-    if (file.contains(cpp_re)) {
-        _sourceHighlighter = new SeerCppSourceHighlighter(0);
-
+    _file = file;
+    SeerSourceHighlighter* highlighter = SeerSourceHighlighter::getSourceHighlighter(_file, _sourceHighlighterSettings);
+    if (highlighter) {
+        _sourceHighlighter = highlighter;
         if (highlighterEnabled()) {
             _sourceHighlighter->setDocument(document());
         }else{
@@ -729,6 +736,31 @@ void SeerEditorWidgetSourceArea::setCurrentLine (int lineno) {
 
     // Refresh all the extra selections.
     refreshExtraSelections();
+}
+
+int SeerEditorWidgetSourceArea::currentLine () const {
+    QTextCursor cursor = textCursor();
+    return cursor.blockNumber() + 1;;
+}
+
+void SeerEditorWidgetSourceArea::setCurrentColumn (int colno) {
+    QTextCursor cursor = textCursor();
+
+    int lineStartPos = cursor.block().position();
+    int newPos       = lineStartPos + (colno - 1);
+
+    cursor.setPosition(newPos);
+    setTextCursor(cursor);
+}
+
+int SeerEditorWidgetSourceArea::currentColumn () const {
+    QTextCursor cursor = textCursor();
+    return cursor.positionInBlock() + 1;
+}
+
+int SeerEditorWidgetSourceArea::firstDisplayLine () const {
+    QTextBlock block = firstVisibleBlock();
+    return block.blockNumber() + 1;
 }
 
 void SeerEditorWidgetSourceArea::scrollToLine (int lineno) {
@@ -920,6 +952,30 @@ bool SeerEditorWidgetSourceArea::breakpointLineEnabled (int lineno) const {
     return _breakpointsEnableds[i];
 }
 
+void SeerEditorWidgetSourceArea::breakpointToggle () {
+
+    // Get current lineno.
+    int lineno = textCursor().blockNumber() + 1;
+
+    // If there is a breakpoint on the line, toggle it.
+    if (hasBreakpointLine(lineno)) {
+
+        // Toggle the breakpoint.
+        // Enable if disabled. Disable if enabled.
+        if (breakpointLineEnabled(lineno) == false) {
+            // Emit the enable breakpoint signal.
+            emit enableBreakpoints(QString("%1").arg(breakpointLineToNumber(lineno)));
+        }else{
+            // Emit the disable breakpoint signal.
+            emit deleteBreakpoints(QString("%1").arg(breakpointLineToNumber(lineno)));
+        }
+
+    // Otherwise, do a quick create of a new breakpoint.
+    }else{
+        emit insertBreakpoint(QString("-f --source \"%1\" --line %2").arg(fullname()).arg(lineno));
+    }
+}
+
 void SeerEditorWidgetSourceArea::showContextMenu (QMouseEvent* event) {
 
 #if QT_VERSION >= 0x060000
@@ -953,10 +1009,12 @@ void SeerEditorWidgetSourceArea::showContextMenu (const QPoint& pos, const QPoin
     QAction* addVariableLoggerAsteriskExpressionAction;
     QAction* addVariableLoggerAmpersandExpressionAction;
     QAction* addVariableLoggerAsteriskAmpersandExpressionAction;
+    QAction* addVariableLoggerObjcExpressionAction;
     QAction* addVariableTrackerExpressionAction;
     QAction* addVariableTrackerAsteriskExpressionAction;
     QAction* addVariableTrackerAmpersandExpressionAction;
     QAction* addVariableTrackerAsteriskAmpersandExpressionAction;
+    QAction* addVariableTrackerObjcExpressionAction;
     QAction* addMemoryVisualizerAction;
     QAction* addMemoryAsteriskVisualizerAction;
     QAction* addMemoryAmpersandVisualizerAction;
@@ -1009,26 +1067,28 @@ void SeerEditorWidgetSourceArea::showContextMenu (const QPoint& pos, const QPoin
         openExternalEditor->setEnabled(true);
     }
 
-    addVariableLoggerExpressionAction                   = new QAction(QString("\"%1\"").arg(textCursor().selectedText()));
-    addVariableLoggerAsteriskExpressionAction           = new QAction(QString("\"*%1\"").arg(textCursor().selectedText()));
-    addVariableLoggerAmpersandExpressionAction          = new QAction(QString("\"&&%1\"").arg(textCursor().selectedText()));
-    addVariableLoggerAsteriskAmpersandExpressionAction  = new QAction(QString("\"*&&%1\"").arg(textCursor().selectedText()));
-    addVariableTrackerExpressionAction                  = new QAction(QString("\"%1\"").arg(textCursor().selectedText()));
-    addVariableTrackerAsteriskExpressionAction          = new QAction(QString("\"*%1\"").arg(textCursor().selectedText()));
-    addVariableTrackerAmpersandExpressionAction         = new QAction(QString("\"&&%1\"").arg(textCursor().selectedText()));
-    addVariableTrackerAsteriskAmpersandExpressionAction = new QAction(QString("\"*&&%1\"").arg(textCursor().selectedText()));
-    addMemoryVisualizerAction                           = new QAction(QString("\"%1\"").arg(textCursor().selectedText()));
-    addMemoryAsteriskVisualizerAction                   = new QAction(QString("\"*%1\"").arg(textCursor().selectedText()));
-    addMemoryAmpersandVisualizerAction                  = new QAction(QString("\"&&%1\"").arg(textCursor().selectedText()));
-    addArrayVisualizerAction                            = new QAction(QString("\"%1\"").arg(textCursor().selectedText()));
-    addArrayAsteriskVisualizerAction                    = new QAction(QString("\"*%1\"").arg(textCursor().selectedText()));
-    addArrayAmpersandVisualizerAction                   = new QAction(QString("\"&&%1\"").arg(textCursor().selectedText()));
-    addMatrixVisualizerAction                           = new QAction(QString("\"%1\"").arg(textCursor().selectedText()));
-    addMatrixAsteriskVisualizerAction                   = new QAction(QString("\"*%1\"").arg(textCursor().selectedText()));
-    addMatrixAmpersandVisualizerAction                  = new QAction(QString("\"&&%1\"").arg(textCursor().selectedText()));
-    addStructVisualizerAction                           = new QAction(QString("\"%1\"").arg(textCursor().selectedText()));
-    addStructAsteriskVisualizerAction                   = new QAction(QString("\"*%1\"").arg(textCursor().selectedText()));
-    addStructAmpersandVisualizerAction                  = new QAction(QString("\"&&%1\"").arg(textCursor().selectedText()));
+    addVariableLoggerExpressionAction                   = new QAction(QString("%1").arg(textCursor().selectedText()));
+    addVariableLoggerAsteriskExpressionAction           = new QAction(QString("*%1").arg(textCursor().selectedText()));
+    addVariableLoggerAmpersandExpressionAction          = new QAction(QString("&&%1").arg(textCursor().selectedText()));
+    addVariableLoggerAsteriskAmpersandExpressionAction  = new QAction(QString("*&&%1").arg(textCursor().selectedText()));
+    addVariableLoggerObjcExpressionAction               = new QAction(QString("(objc)%1").arg(textCursor().selectedText()));
+    addVariableTrackerExpressionAction                  = new QAction(QString("%1").arg(textCursor().selectedText()));
+    addVariableTrackerAsteriskExpressionAction          = new QAction(QString("*%1").arg(textCursor().selectedText()));
+    addVariableTrackerAmpersandExpressionAction         = new QAction(QString("&&%1").arg(textCursor().selectedText()));
+    addVariableTrackerAsteriskAmpersandExpressionAction = new QAction(QString("*&&%1").arg(textCursor().selectedText()));
+    addVariableTrackerObjcExpressionAction              = new QAction(QString("(objc)%1").arg(textCursor().selectedText()));
+    addMemoryVisualizerAction                           = new QAction(QString("%1").arg(textCursor().selectedText()));
+    addMemoryAsteriskVisualizerAction                   = new QAction(QString("*%1").arg(textCursor().selectedText()));
+    addMemoryAmpersandVisualizerAction                  = new QAction(QString("&&%1").arg(textCursor().selectedText()));
+    addArrayVisualizerAction                            = new QAction(QString("%1").arg(textCursor().selectedText()));
+    addArrayAsteriskVisualizerAction                    = new QAction(QString("*%1").arg(textCursor().selectedText()));
+    addArrayAmpersandVisualizerAction                   = new QAction(QString("&&%1").arg(textCursor().selectedText()));
+    addMatrixVisualizerAction                           = new QAction(QString("%1").arg(textCursor().selectedText()));
+    addMatrixAsteriskVisualizerAction                   = new QAction(QString("*%1").arg(textCursor().selectedText()));
+    addMatrixAmpersandVisualizerAction                  = new QAction(QString("&&%1").arg(textCursor().selectedText()));
+    addStructVisualizerAction                           = new QAction(QString("%1").arg(textCursor().selectedText()));
+    addStructAsteriskVisualizerAction                   = new QAction(QString("*%1").arg(textCursor().selectedText()));
+    addStructAmpersandVisualizerAction                  = new QAction(QString("&&%1").arg(textCursor().selectedText()));
 
     QMenu menu("Breakpoints", this);
     menu.setTitle("Breakpoints");
@@ -1045,6 +1105,7 @@ void SeerEditorWidgetSourceArea::showContextMenu (const QPoint& pos, const QPoin
     loggerMenu.addAction(addVariableLoggerAsteriskExpressionAction);
     loggerMenu.addAction(addVariableLoggerAmpersandExpressionAction);
     loggerMenu.addAction(addVariableLoggerAsteriskAmpersandExpressionAction);
+    loggerMenu.addAction(addVariableLoggerObjcExpressionAction);
     menu.addMenu(&loggerMenu);
 
     QMenu trackerMenu("Add variable to Tracker");
@@ -1052,6 +1113,7 @@ void SeerEditorWidgetSourceArea::showContextMenu (const QPoint& pos, const QPoin
     trackerMenu.addAction(addVariableTrackerAsteriskExpressionAction);
     trackerMenu.addAction(addVariableTrackerAmpersandExpressionAction);
     trackerMenu.addAction(addVariableTrackerAsteriskAmpersandExpressionAction);
+    trackerMenu.addAction(addVariableTrackerObjcExpressionAction);
     menu.addMenu(&trackerMenu);
 
     QMenu memoryVisualizerMenu("Add variable to a Memory Visualizer");
@@ -1084,6 +1146,7 @@ void SeerEditorWidgetSourceArea::showContextMenu (const QPoint& pos, const QPoin
         addVariableLoggerAsteriskExpressionAction->setEnabled(false);
         addVariableLoggerAmpersandExpressionAction->setEnabled(false);
         addVariableLoggerAsteriskAmpersandExpressionAction->setEnabled(false);
+        addVariableLoggerObjcExpressionAction->setEnabled(false);
         addVariableTrackerExpressionAction->setEnabled(false);
         addVariableTrackerAsteriskExpressionAction->setEnabled(false);
         addVariableTrackerAmpersandExpressionAction->setEnabled(false);
@@ -1105,6 +1168,7 @@ void SeerEditorWidgetSourceArea::showContextMenu (const QPoint& pos, const QPoin
         addVariableLoggerAsteriskExpressionAction->setEnabled(true);
         addVariableLoggerAmpersandExpressionAction->setEnabled(true);
         addVariableLoggerAsteriskAmpersandExpressionAction->setEnabled(true);
+        addVariableLoggerObjcExpressionAction->setEnabled(true);
         addVariableTrackerExpressionAction->setEnabled(true);
         addVariableTrackerAsteriskExpressionAction->setEnabled(true);
         addVariableTrackerAmpersandExpressionAction->setEnabled(true);
@@ -1244,7 +1308,7 @@ void SeerEditorWidgetSourceArea::showContextMenu (const QPoint& pos, const QPoin
         bool f = process->waitForStarted(5000);
 
         // Set the cursor back.
-        QApplication::setOverrideCursor(Qt::ArrowCursor);
+        QApplication::restoreOverrideCursor();
 
         if (f == false) {
             QMessageBox::critical(this, "Error!",  "Launching external editor failed.\n\nCommand: '" + codeEditorCmd + "'");
@@ -1299,6 +1363,17 @@ void SeerEditorWidgetSourceArea::showContextMenu (const QPoint& pos, const QPoin
         return;
     }
 
+    // Handle adding a variable to log.
+    if (action == addVariableLoggerObjcExpressionAction) {
+
+        // Emit the signals.
+        if (textCursor().selectedText() != "") {
+            emit addVariableLoggerExpression(QString("(objc)") + textCursor().selectedText());
+        }
+
+        return;
+    }
+
     // Handle adding a variable to track.
     if (action == addVariableTrackerExpressionAction) {
 
@@ -1341,6 +1416,18 @@ void SeerEditorWidgetSourceArea::showContextMenu (const QPoint& pos, const QPoin
         // Emit the signals.
         if (textCursor().selectedText() != "") {
             emit addVariableTrackerExpression(QString("*&") + textCursor().selectedText());
+            emit refreshVariableTrackerValues();
+        }
+
+        return;
+    }
+
+    // Handle adding a variable to track.
+    if (action == addVariableTrackerObjcExpressionAction) {
+
+        // Emit the signals.
+        if (textCursor().selectedText() != "") {
+            emit addVariableTrackerExpression(QString("(objc)") + textCursor().selectedText());
             emit refreshVariableTrackerValues();
         }
 
@@ -1750,6 +1837,7 @@ void SeerEditorWidgetSourceArea::handleHighlighterSettingsChanged () {
     setPalette(p);
 
     // Update the syntax highlighter.
+    _sourceHighlighter = SeerSourceHighlighter::getSourceHighlighter(_file, _sourceHighlighterSettings);
     if (_sourceHighlighter) {
 
         if (highlighterEnabled()) {
@@ -1954,7 +2042,7 @@ void SeerEditorWidgetSourceArea::updateCursor(const QPoint &pos)
         QApplication::setOverrideCursor(Qt::PointingHandCursor);
         _wordUnderCursor = wordUnderCursor(pos);
     } else {
-        QApplication::setOverrideCursor(Qt::ArrowCursor);
+        QApplication::restoreOverrideCursor();
     }
 }
 

@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2021 Ernie Pasveer <epasveer@att.net>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "SeerStackFramesBrowserWidget.h"
 #include "SeerUtl.h"
 #include <QtWidgets/QTreeWidget>
@@ -142,7 +146,7 @@ void SeerStackFramesBrowserWidget::handleText (const QString& text) {
     stackTreeWidget->resizeColumnToContents(5);
     stackTreeWidget->resizeColumnToContents(6);
 
-    QApplication::setOverrideCursor(Qt::ArrowCursor);
+    QApplication::restoreOverrideCursor();
 }
 
 void SeerStackFramesBrowserWidget::handleStoppingPointReached () {

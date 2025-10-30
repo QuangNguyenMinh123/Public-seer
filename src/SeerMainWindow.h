@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2021 Ernie Pasveer <epasveer@att.net>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #pragma once
 
 #include "ui_SeerMainWindow.h"
@@ -86,14 +90,6 @@ class SeerMainWindow : public QMainWindow, protected Ui::SeerMainWindowForm {
         void                                setGdbMultiarchExePath              (const QString& path);
         const QString&                      gdbMultiarchCommand                 ();
         void                                setGdbMultiarchCommand              (const QString& command);
-        bool                                isGdbMultiarchIsStopAtTempFunc      ();
-        void                                setGdbMultiarchStopAtTempFunc       (bool check);
-        const QString                       gdbMultiarchStopAtFunc              ();
-        void                                setGdbMultiarchStopAtFunc           (const QString& func);
-        bool                                isGdbMultiarchStopAtException       ();
-        void                                setGdbMultiarchStopAtExeption       (bool check);
-        const QString                       gdbMultiarchExeptionLevelToStop     ();
-        void                                setGdbMultiarchExeptionLevelToStop  (const QString& level);
         const QString                       openOCDTarget                       ();
         void                                setOpenOCDTarget                    (const QString& target);
         // ::Docker
